@@ -44,6 +44,8 @@ export class Renderer {
     this.scene.add(this.terrainRenderer.getTrunkMesh());
     this.scene.add(this.terrainRenderer.getFoliageMesh());
     this.scene.add(this.terrainRenderer.getRockMesh());
+    this.scene.add(this.terrainRenderer.getRobotBodyMesh());
+    this.scene.add(this.terrainRenderer.getRobotHeadMesh());
 
     this.createVerticalStructure();
     this.createSentinelHead();

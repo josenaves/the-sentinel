@@ -18,6 +18,36 @@ function exposedSetup(): { world: World; player: Player; sentinel: Sentinel } {
   return { world, player, sentinel };
 }
 
+function clearWorld(world: World): void {
+  for (let z = 0; z < 16; z++) {
+    for (let x = 0; x < 16; x++) {
+      world.setObject(x, z, 'empty');
+      world.setStack(x, z, 0);
+    }
+  }
+}
+
+function countTrees(world: World): number {
+  let count = 0;
+  for (let z = 0; z < 16; z++) {
+    for (let x = 0; x < 16; x++) {
+      if (world.getObject(x, z) === 'tree') count++;
+    }
+  }
+  return count;
+}
+
+function cyclingRandom(values: number[]): () => number {
+  let i = 0;
+  return () => values[i++ % values.length]!;
+}
+
+function hiddenPlayer(world: World): Player {
+  const player = new Player(world);
+  player.setPosition(8 * 4 + 2, 0, 4 * 4 + 2);
+  return player;
+}
+
 describe('Sentinel', () => {
   it('should warn but not drain before the scan grace period', () => {
     const { world, player, sentinel } = exposedSetup();
@@ -68,5 +98,79 @@ describe('Sentinel', () => {
     world.setHeight(8, 10, 8);
     sentinel.update(1, world, player);
     expect(sentinel.warning).toBe(false);
+  });
+
+  it('should absorb a visible boulder and regrow its energy as trees', () => {
+    const world = flatWorld();
+    clearWorld(world);
+    const player = hiddenPlayer(world);
+    const sentinel = new Sentinel();
+    sentinel.angle = 0;
+    world.placeBoulder(8, 10);
+
+    const changed = sentinel.update(1, world, player, cyclingRandom([0, 0, 0, 0.5]));
+
+    expect(changed).toBe(true);
+    expect(world.getObject(8, 10)).toBe('empty');
+    expect(world.getStack(8, 10)).toBe(0);
+    expect(countTrees(world)).toBe(2);
+    expect(player.energy).toBe(10);
+  });
+
+  it('should ignore trees', () => {
+    const world = flatWorld();
+    clearWorld(world);
+    const player = hiddenPlayer(world);
+    const sentinel = new Sentinel();
+    sentinel.angle = 0;
+    world.placeTree(8, 10);
+
+    const changed = sentinel.update(1, world, player, cyclingRandom([0]));
+
+    expect(changed).toBe(false);
+    expect(world.getObject(8, 10)).toBe('tree');
+    expect(countTrees(world)).toBe(1);
+  });
+
+  it('should absorb a robot shell and regrow three trees', () => {
+    const world = flatWorld();
+    clearWorld(world);
+    const player = hiddenPlayer(world);
+    const sentinel = new Sentinel();
+    sentinel.angle = 0;
+    world.placeRobot(8, 10);
+
+    const changed = sentinel.update(1, world, player, cyclingRandom([0, 0, 0, 0.25, 0, 0.5]));
+
+    expect(changed).toBe(true);
+    expect(world.getObject(8, 10)).toBe('empty');
+    expect(countTrees(world)).toBe(3);
+  });
+
+  it('should not absorb the shell the player stands on', () => {
+    const { world, player, sentinel } = exposedSetup();
+    clearWorld(world);
+    world.placeRobot(8, 12);
+
+    const changed = sentinel.update(1, world, player, cyclingRandom([0]));
+
+    expect(changed).toBe(false);
+    expect(world.getObject(8, 12)).toBe('robot');
+    expect(player.energy).toBe(10);
+  });
+
+  it('should not absorb landscape once absorbed itself', () => {
+    const world = flatWorld();
+    clearWorld(world);
+    const player = hiddenPlayer(world);
+    const sentinel = new Sentinel();
+    sentinel.angle = 0;
+    sentinel.absorbed = true;
+    world.placeBoulder(8, 10);
+
+    const changed = sentinel.update(1, world, player, cyclingRandom([0]));
+
+    expect(changed).toBe(false);
+    expect(world.getObject(8, 10)).toBe('boulder');
   });
 });

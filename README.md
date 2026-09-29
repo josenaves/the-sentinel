@@ -1,0 +1,89 @@
+# SENTINEL-3D
+
+A modern reimagining of **The Sentinel** (1986, ZX Spectrum) built with TypeScript and Three.js.
+
+## Inspiration
+
+The Sentinel is a classic atmospheric puzzle-strategy game where you explore a 3D landscape, absorb energy, create clones, and ultimately confront the Sentinel entity. This project aims to recreate that experience with modern graphics while preserving the core mechanics.
+
+## Stack
+
+- **TypeScript** - Type-safe JavaScript
+- **Three.js** - WebGL 3D rendering
+- **Vite** - Fast build tool and dev server
+- **Vitest** - Unit testing framework
+
+## Installation
+
+```bash
+npm install
+```
+
+## Development
+
+```bash
+npm run dev
+```
+
+Opens the game at http://localhost:3000
+
+## Testing
+
+```bash
+npm test
+```
+
+## Building
+
+```bash
+npm run build
+```
+
+Outputs to `dist/`
+
+## Architecture
+
+```
+GAME DOMAIN (world, player, entities)
+    ↓
+WORLD MODEL (grid, cells, terrain generation)
+    ↓
+GAMEPLAY SYSTEMS (movement, interaction, energy)
+    ↓
+THREE.JS RENDERING (scene, camera, meshes, lighting)
+    ↓
+INPUT / UI (keyboard, mouse, HUD)
+```
+
+Key principle: **Game logic is independent of Three.js**. The world can be tested without a WebGL context.
+
+## Roadmap
+
+| Milestone | Focus |
+|-----------|-------|
+| 1 | Foundation (Three.js setup, basic terrain, player movement) |
+| 2 | Terrain (procedural generation, instanced rendering) |
+| 3 | Player (refined controls, collision, camera) |
+| 4 | Interaction (absorption, creation) |
+| 5 | Energy (resource system) |
+| 6 | Construction (vertical structures) |
+| 7 | Clones (player duplicates) |
+| 8 | Sentinel (main antagonist) |
+| 9 | Sentries (guardian entities) |
+| 10 | Level system |
+| 11 | Procedural worlds |
+| 12 | Polish |
+
+## Controls
+
+| Key | Action |
+|-----|--------|
+| W / S | Forward / Backward |
+| A / D | Strafe Left / Right |
+| Mouse | Look around |
+| Click | Lock pointer |
+| ESC | Release pointer |
+
+## License
+
+MIT

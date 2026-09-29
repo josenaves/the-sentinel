@@ -5,12 +5,13 @@ import { World, type SightTarget } from '../world/World.js';
 import { Player, type InputState } from '../player/Player.js';
 import { Sentinel } from '../entities/Sentinel.js';
 import { Sentry } from '../entities/Sentry.js';
+import { Meanie } from '../entities/Meanie.js';
 import { InputManager } from '../input/InputManager.js';
 import { Renderer } from '../rendering/Renderer.js';
 import type { HUD } from '../ui/HUD.js';
 import type { CellObject } from '../world/Cell.js';
 import { getObjectEnergy } from '../world/Cell.js';
-import { TREE_COST, BOULDER_COST, ROBOT_COST, HYPERSPACE_COST, SENTINEL_ENERGY } from './Constants.js';
+import { TREE_COST, BOULDER_COST, ROBOT_COST, HYPERSPACE_COST, SENTINEL_ENERGY, MEANIE_ROTATION_SPEED } from './Constants.js';
 
 export class Game {
   private state: GameState;
@@ -22,6 +23,7 @@ export class Game {
   private hud: HUD | null = null;
   private sentinel: Sentinel;
   private sentries: Sentry[] = [];
+  private meanie: Meanie | null = null;
   private over = false;
   private overMessage = 'ABSORBED BY THE SENTINEL';
   private transitionTo: number | null = null;
@@ -51,6 +53,7 @@ export class Game {
 
   private loadLandscape(landscapeNumber: number): void {
     const energy = this.player.energy;
+    this.clearMeanie();
     this.renderer.dispose();
     this.world = new World(landscapeNumber);
     this.player = new Player(this.world);
@@ -126,6 +129,8 @@ export class Game {
       }
     }
     this.hud?.setWarning(this.sentinel.warning || this.sentries.some((sentry) => sentry.warning));
+    this.updateMeanie(deltaTime);
+    this.hud?.setMeanie(this.meanie !== null);
     if (!this.over && this.player.energy <= 0) {
       this.endGame(this.overMessage);
     }
@@ -152,6 +157,7 @@ export class Game {
   private describeTarget(target: SightTarget | null): string {
     if (!target) return 'Mira: —';
     if (target.tower) return 'Mira: torre';
+    if (this.meanie && this.meanie.x === target.x && this.meanie.z === target.z) return 'Mira: meanie';
     if (this.sentryAt(target.x, target.z)) return 'Mira: sentry';
     const stack = this.world.getStack(target.x, target.z);
     const suffix = stack > 0 ? ` x${stack + 1}` : '';
@@ -181,6 +187,10 @@ export class Game {
     }
     if (!input.absorb && !input.createTree && !input.createBoulder && !input.createRobot && !input.transfer) return;
     if (!target) return;
+    // Like the 1986 original, the sights never target your own square:
+    // you cannot absorb the stack you stand on nor create inside yourself.
+    const currentCell = this.player.currentCell();
+    if (target.x === currentCell.x && target.z === currentCell.z) return;
 
     let changed = false;
     if (input.absorb) {
@@ -216,6 +226,9 @@ export class Game {
     else if (object === 'boulder') taken = this.world.takeBoulder(target.x, target.z);
     else taken = this.world.takeRobot(target.x, target.z, isCurrent);
     if (!taken) return false;
+    if (object === 'tree' && this.meanie && this.meanie.x === target.x && this.meanie.z === target.z) {
+      this.clearMeanie();
+    }
     this.player.addEnergy(getObjectEnergy(object));
     return true;
   }
@@ -233,6 +246,43 @@ export class Game {
     sentry.absorbed = true;
     this.player.addEnergy(getObjectEnergy('sentry'));
     return true;
+  }
+
+  private updateMeanie(deltaTime: number): void {
+    if (!this.meanie) {
+      this.trySpawnMeanie();
+      return;
+    }
+    this.meanie.angle = (this.meanie.angle + MEANIE_ROTATION_SPEED * deltaTime) % (Math.PI * 2);
+    this.meanie.spun += MEANIE_ROTATION_SPEED * deltaTime;
+    if (this.meanie.seesSquare(this.world, this.player)) {
+      this.clearMeanie();
+      if (this.hyperspace()) {
+        this.renderer.updateTerrain();
+      }
+    } else if (this.meanie.spun >= Math.PI * 2) {
+      this.clearMeanie();
+    }
+  }
+
+  private trySpawnMeanie(): void {
+    if (this.over) return;
+    const watchers: Sentinel[] = [this.sentinel, ...this.sentries];
+    for (const watcher of watchers) {
+      if (watcher.absorbed) continue;
+      if (!watcher.seesHead(this.world, this.player)) continue;
+      if (watcher.seesSquare(this.world, this.player)) continue;
+      const spot = Meanie.spawnAt(this.world, this.player);
+      if (!spot) continue;
+      this.meanie = new Meanie(spot.x, spot.z);
+      this.renderer.setMeanie(this.meanie);
+      break;
+    }
+  }
+
+  private clearMeanie(): void {
+    this.meanie = null;
+    this.renderer.setMeanie(null);
   }
 
   private transfer(target: SightTarget): boolean {

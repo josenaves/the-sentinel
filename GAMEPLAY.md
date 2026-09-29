@@ -78,7 +78,15 @@ sight (or leave the cone) to reset. At 0 energy you are absorbed:
 game over. It also absorbs boulders and robot shells it sees (never
 trees, never the shell you stand on): each absorbed energy unit
 regrows as a random tree elsewhere, keeping total energy constant.
-(Meanie is a future milestone.)
+
+## Meanie
+
+If a watcher sees your head but not your square (you are peeking
+from behind cover), it transforms a tree near you into a Meanie.
+The Meanie spins fast: if it sees your square it forces a
+hyperspace (`-3` energy, same rules as `H`); if it completes a full
+turn without seeing it, it reverts to a tree. Absorbing the tree
+(`A`, +1) also removes the Meanie.
 
 ## Sentries
 

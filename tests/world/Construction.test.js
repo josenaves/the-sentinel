@@ -97,6 +97,14 @@ describe('Construction', () => {
         expect(world.isTowerOpen()).toBe(true);
         expect(world.placeRobot(8, 8)).toBe(true);
     });
+    it('should only allow robots on the open tower, never trees or boulders', () => {
+        const world = emptyWorld();
+        world.setTowerOpen(true);
+        expect(world.placeTree(8, 8)).toBe(false);
+        expect(world.placeBoulder(8, 8)).toBe(false);
+        expect(world.placeRobot(8, 8)).toBe(true);
+        expect(world.getObject(8, 8)).toBe('robot');
+    });
     it('should only allow absorbing the Sentinel from above its platform', () => {
         const world = emptyWorld();
         const top = world.columnTopAt(8, 8);

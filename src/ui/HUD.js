@@ -87,6 +87,16 @@ export class HUD {
         }
         warning.style.display = active ? 'block' : 'none';
     }
+    setMeanie(active) {
+        let meanie = this.element.querySelector('[data-meanie]');
+        if (!meanie) {
+            meanie = document.createElement('div');
+            meanie.setAttribute('data-meanie', 'true');
+            meanie.textContent = '!! MEANIE — MOVE !!';
+            this.element.appendChild(meanie);
+        }
+        meanie.style.display = active ? 'block' : 'none';
+    }
     showMessage(text) {
         if (!this.overlay) {
             const overlay = document.createElement('div');

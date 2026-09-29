@@ -98,7 +98,7 @@ export class World {
   }
 
   placeTree(x: number, z: number): boolean {
-    if (this.isTowerClosed(x, z)) return false;
+    if (this.isTowerCell(x, z)) return false;
     if (this.terrain.getObject(x, z) !== 'empty' || this.terrain.getStack(x, z) > 0) return false;
     return this.terrain.setObject(x, z, 'tree');
   }
@@ -109,7 +109,7 @@ export class World {
   }
 
   placeBoulder(x: number, z: number): boolean {
-    if (this.isTowerClosed(x, z)) return false;
+    if (this.isTowerCell(x, z)) return false;
     const object = this.terrain.getObject(x, z);
     if (object !== 'empty' && object !== 'boulder') return false;
     if (!this.terrain.setStack(x, z, this.terrain.getStack(x, z) + 1)) return false;

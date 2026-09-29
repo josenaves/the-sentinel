@@ -1,4 +1,4 @@
-import { Scene, WebGLRenderer, PerspectiveCamera, Color, InstancedMesh, Mesh, BoxGeometry, CylinderGeometry, IcosahedronGeometry, SphereGeometry, MeshStandardMaterial, Matrix4, Vector3, Group } from 'three';
+import { Scene, WebGLRenderer, PerspectiveCamera, Color, InstancedMesh, Mesh, BoxGeometry, CylinderGeometry, ConeGeometry, IcosahedronGeometry, SphereGeometry, MeshStandardMaterial, Matrix4, Vector3, Group } from 'three';
 import { World } from '../world/World.js';
 import { CELL_SIZE, WORLD_SIZE } from '../core/Constants.js';
 import { createLighting } from './Lighting.js';
@@ -6,6 +6,7 @@ import { TerrainRenderer } from './TerrainRenderer.js';
 import { Player } from '../player/Player.js';
 import type { Sentinel } from '../entities/Sentinel.js';
 import type { Sentry } from '../entities/Sentry.js';
+import type { Meanie } from '../entities/Meanie.js';
 
 export class Renderer {
   private renderer: WebGLRenderer;
@@ -14,6 +15,8 @@ export class Renderer {
   private terrainRenderer: TerrainRenderer;
   private structureMesh: InstancedMesh | null = null;
   private watcherHeads: Array<{ group: Group; entity: Sentinel }> = [];
+  private meanieMesh: Mesh | null = null;
+  private meanie: Meanie | null = null;
   private world: World;
   private player: Player;
   private sentinel: Sentinel | null = null;
@@ -163,10 +166,39 @@ export class Renderer {
     this.terrainRenderer.update();
   }
 
+  setMeanie(meanie: Meanie | null): void {
+    if (this.meanieMesh) {
+      this.scene.remove(this.meanieMesh);
+      this.meanieMesh.geometry.dispose();
+      (this.meanieMesh.material as MeshStandardMaterial).dispose();
+      this.meanieMesh = null;
+    }
+    this.meanie = meanie;
+    if (!meanie) return;
+    const material = new MeshStandardMaterial({
+      color: 0xff2d78,
+      emissive: 0xaa0f4d,
+      emissiveIntensity: 0.8,
+      flatShading: true,
+    });
+    const mesh = new Mesh(new ConeGeometry(1.4, 7, 7), material);
+    mesh.castShadow = true;
+    mesh.position.set(
+      (meanie.x + 0.5) * CELL_SIZE,
+      this.world.columnTopAt(meanie.x, meanie.z) + 3.5,
+      (meanie.z + 0.5) * CELL_SIZE,
+    );
+    this.meanieMesh = mesh;
+    this.scene.add(mesh);
+  }
+
   render(): void {
     for (const { group, entity } of this.watcherHeads) {
       group.rotation.y = entity.angle;
       group.visible = !entity.absorbed;
+    }
+    if (this.meanieMesh && this.meanie) {
+      this.meanieMesh.rotation.y = this.meanie.angle;
     }
     this.camera.position.set(this.player.position.x, this.player.position.y, this.player.position.z);
 
@@ -199,6 +231,7 @@ export class Renderer {
       this.scene.remove(group);
     }
     this.watcherHeads = [];
+    this.setMeanie(null);
     if (this.structureMesh) {
       this.structureMesh.geometry.dispose();
       (this.structureMesh.material as any).dispose();

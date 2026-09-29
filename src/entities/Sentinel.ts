@@ -49,10 +49,27 @@ export class Sentinel extends Entity {
   }
 
   private seesPlayer(world: World, player: Player): boolean {
+    return this.seesHead(world, player);
+  }
+
+  seesHead(world: World, player: Player): boolean {
     const eye = this.eyePosition(world);
     if (!this.withinGaze(eye, player.position)) return false;
 
     return world.hasLineOfSight(eye, player.position);
+  }
+
+  seesSquare(world: World, player: Player): boolean {
+    const eye = this.eyePosition(world);
+    const current = player.currentCell();
+    const base = {
+      x: player.position.x,
+      y: world.columnTopAt(current.x, current.z),
+      z: player.position.z,
+    };
+    if (!this.withinGaze(eye, base)) return false;
+
+    return world.hasLineOfSight(eye, base);
   }
 
   private withinGaze(eye: { x: number; y: number; z: number }, target: { x: number; y: number; z: number }): boolean {

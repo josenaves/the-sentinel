@@ -68,7 +68,7 @@ export class World {
         return eyeY > this.columnTopAt(structure.x, structure.z);
     }
     placeTree(x, z) {
-        if (this.isTowerClosed(x, z))
+        if (this.isTowerCell(x, z))
             return false;
         if (this.terrain.getObject(x, z) !== 'empty' || this.terrain.getStack(x, z) > 0)
             return false;
@@ -80,7 +80,7 @@ export class World {
         return this.terrain.setObject(x, z, 'empty');
     }
     placeBoulder(x, z) {
-        if (this.isTowerClosed(x, z))
+        if (this.isTowerCell(x, z))
             return false;
         const object = this.terrain.getObject(x, z);
         if (object !== 'empty' && object !== 'boulder')

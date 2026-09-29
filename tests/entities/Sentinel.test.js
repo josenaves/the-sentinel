@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { World } from '../../src/world/World.js';
 import { Player } from '../../src/player/Player.js';
 import { Sentinel } from '../../src/entities/Sentinel.js';
+afterEach(() => {
+    vi.restoreAllMocks();
+});
 function flatWorld() {
     const world = new World(0);
     for (let z = 0; z < 16; z++)
@@ -90,6 +93,17 @@ describe('Sentinel', () => {
         world.setHeight(8, 10, 8);
         sentinel.update(1, world, player);
         expect(sentinel.warning).toBe(false);
+    });
+    it('should distinguish head visibility from square visibility', () => {
+        const { world, player, sentinel } = exposedSetup();
+        vi.spyOn(world, 'hasLineOfSight').mockImplementation((_from, to) => to.y > 5);
+        expect(sentinel.seesHead(world, player)).toBe(true);
+        expect(sentinel.seesSquare(world, player)).toBe(false);
+    });
+    it('should see the square when line of sight is clear', () => {
+        const { world, player, sentinel } = exposedSetup();
+        expect(sentinel.seesHead(world, player)).toBe(true);
+        expect(sentinel.seesSquare(world, player)).toBe(true);
     });
     it('should absorb a visible boulder and regrow its energy as trees', () => {
         const world = flatWorld();

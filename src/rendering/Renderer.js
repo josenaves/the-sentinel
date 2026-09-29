@@ -1,4 +1,4 @@
-import { Scene, WebGLRenderer, PerspectiveCamera, Color, InstancedMesh, Mesh, BoxGeometry, CylinderGeometry, IcosahedronGeometry, SphereGeometry, MeshStandardMaterial, Matrix4, Vector3, Group } from 'three';
+import { Scene, WebGLRenderer, PerspectiveCamera, Color, InstancedMesh, Mesh, BoxGeometry, CylinderGeometry, ConeGeometry, IcosahedronGeometry, SphereGeometry, MeshStandardMaterial, Matrix4, Vector3, Group } from 'three';
 import { World } from '../world/World.js';
 import { CELL_SIZE, WORLD_SIZE } from '../core/Constants.js';
 import { createLighting } from './Lighting.js';
@@ -11,6 +11,8 @@ export class Renderer {
     terrainRenderer;
     structureMesh = null;
     watcherHeads = [];
+    meanieMesh = null;
+    meanie = null;
     world;
     player;
     sentinel = null;
@@ -118,10 +120,35 @@ export class Renderer {
     updateTerrain() {
         this.terrainRenderer.update();
     }
+    setMeanie(meanie) {
+        if (this.meanieMesh) {
+            this.scene.remove(this.meanieMesh);
+            this.meanieMesh.geometry.dispose();
+            this.meanieMesh.material.dispose();
+            this.meanieMesh = null;
+        }
+        this.meanie = meanie;
+        if (!meanie)
+            return;
+        const material = new MeshStandardMaterial({
+            color: 0xff2d78,
+            emissive: 0xaa0f4d,
+            emissiveIntensity: 0.8,
+            flatShading: true,
+        });
+        const mesh = new Mesh(new ConeGeometry(1.4, 7, 7), material);
+        mesh.castShadow = true;
+        mesh.position.set((meanie.x + 0.5) * CELL_SIZE, this.world.columnTopAt(meanie.x, meanie.z) + 3.5, (meanie.z + 0.5) * CELL_SIZE);
+        this.meanieMesh = mesh;
+        this.scene.add(mesh);
+    }
     render() {
         for (const { group, entity } of this.watcherHeads) {
             group.rotation.y = entity.angle;
             group.visible = !entity.absorbed;
+        }
+        if (this.meanieMesh && this.meanie) {
+            this.meanieMesh.rotation.y = this.meanie.angle;
         }
         this.camera.position.set(this.player.position.x, this.player.position.y, this.player.position.z);
         const lookAt = new Vector3();
@@ -150,6 +177,7 @@ export class Renderer {
             this.scene.remove(group);
         }
         this.watcherHeads = [];
+        this.setMeanie(null);
         if (this.structureMesh) {
             this.structureMesh.geometry.dispose();
             this.structureMesh.material.dispose();

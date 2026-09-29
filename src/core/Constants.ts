@@ -18,3 +18,6 @@ export const SENTINEL_DRAIN_INTERVAL = 1;
 export const MOUSE_SENSITIVITY = 0.002;
 export const MAX_SENTRIES = 5;
 export const LANDSCAPES_PER_SENTRY = 1500;
+export const MEANIE_ROTATION_SPEED = 4.5;
+export const MEANIE_TREE_RANGE = 4;
+export const MEANIE_EYE_HEIGHT = 6;

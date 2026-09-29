@@ -41,10 +41,25 @@ export class Sentinel extends Entity {
         return this.absorbLandscape(deltaTime, world, player, random);
     }
     seesPlayer(world, player) {
+        return this.seesHead(world, player);
+    }
+    seesHead(world, player) {
         const eye = this.eyePosition(world);
         if (!this.withinGaze(eye, player.position))
             return false;
         return world.hasLineOfSight(eye, player.position);
+    }
+    seesSquare(world, player) {
+        const eye = this.eyePosition(world);
+        const current = player.currentCell();
+        const base = {
+            x: player.position.x,
+            y: world.columnTopAt(current.x, current.z),
+            z: player.position.z,
+        };
+        if (!this.withinGaze(eye, base))
+            return false;
+        return world.hasLineOfSight(eye, base);
     }
     withinGaze(eye, target) {
         const dx = target.x - eye.x;

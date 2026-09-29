@@ -17,3 +17,5 @@ export const SENTINEL_FOV = 0.7;
 export const SENTINEL_SCAN_GRACE = 5;
 export const SENTINEL_DRAIN_INTERVAL = 1;
 export const MOUSE_SENSITIVITY = 0.002;
+export const MAX_SENTRIES = 5;
+export const LANDSCAPES_PER_SENTRY = 1500;

@@ -80,6 +80,16 @@ trees, never the shell you stand on): each absorbed energy unit
 regrows as a random tree elsewhere, keeping total energy constant.
 (Meanie is a future milestone.)
 
+## Sentries
+
+Guardian entities on later landscapes (1 per 1500 landscape numbers,
+up to 5; none below 1500). New games start at landscape 0000 with no
+sentries, like the 1986 original. They behave like the Sentinel — rotating
+gaze, energy drain, landscape absorption — but stand on ordinary
+squares instead of a tower. Absorbing them is optional: aim at the
+sentry while looking down on its square (`A`, +4 energy). They are
+not required to complete the landscape.
+
 Later may have:
 
 ```typescript

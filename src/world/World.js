@@ -1,17 +1,19 @@
 import { Terrain } from './Terrain.js';
 import { WorldGenerator } from './WorldGenerator.js';
-import { CELL_SIZE, SIGHT_RANGE, LANDSCAPE_COUNT } from '../core/Constants.js';
+import { CELL_SIZE, SIGHT_RANGE, LANDSCAPE_COUNT, MAX_SENTRIES, LANDSCAPES_PER_SENTRY } from '../core/Constants.js';
 export class World {
     terrain;
     verticalStructure = null;
     landscapeNumber;
     towerOpen = false;
+    sentries = [];
     constructor(seed = 12345) {
         const n = Math.floor(seed);
         this.landscapeNumber = ((n % LANDSCAPE_COUNT) + LANDSCAPE_COUNT) % LANDSCAPE_COUNT;
         const generator = new WorldGenerator(seed);
         this.terrain = generator.generate();
         this.createVerticalStructure();
+        this.sentries = this.placeSentries();
     }
     getLandscapeNumber() {
         return this.landscapeNumber;
@@ -21,6 +23,9 @@ export class World {
     }
     setTowerOpen(open) {
         this.towerOpen = open;
+    }
+    getSentries() {
+        return this.sentries;
     }
     getTerrain() {
         return this.terrain;
@@ -210,5 +215,37 @@ export class World {
             z: centerZ,
             height: baseHeight + 6,
         };
+    }
+    placeSentries() {
+        const count = Math.min(MAX_SENTRIES, Math.floor(this.landscapeNumber / LANDSCAPES_PER_SENTRY));
+        const posts = [];
+        if (count === 0)
+            return posts;
+        const size = this.terrain.getSize();
+        let state = this.landscapeNumber >>> 0;
+        const random = () => {
+            state = (state * 1664525 + 1013904223) >>> 0;
+            return state / 0x100000000;
+        };
+        const total = size * size;
+        const indices = Array.from({ length: total }, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(random() * (i + 1));
+            const a = indices[i];
+            indices[i] = indices[j];
+            indices[j] = a;
+        }
+        for (const index of indices) {
+            if (posts.length >= count)
+                break;
+            const x = index % size;
+            const z = Math.floor(index / size);
+            if (this.isTowerCell(x, z))
+                continue;
+            if (this.terrain.getObject(x, z) !== 'empty')
+                continue;
+            posts.push({ x, z });
+        }
+        return posts;
     }
 }

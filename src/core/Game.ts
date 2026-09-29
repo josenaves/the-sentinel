@@ -4,6 +4,7 @@ import { GameLoop } from './GameLoop.js';
 import { World, type SightTarget } from '../world/World.js';
 import { Player, type InputState } from '../player/Player.js';
 import { Sentinel } from '../entities/Sentinel.js';
+import { Sentry } from '../entities/Sentry.js';
 import { InputManager } from '../input/InputManager.js';
 import { Renderer } from '../rendering/Renderer.js';
 import type { HUD } from '../ui/HUD.js';
@@ -20,6 +21,7 @@ export class Game {
   private gameLoop: GameLoop;
   private hud: HUD | null = null;
   private sentinel: Sentinel;
+  private sentries: Sentry[] = [];
   private over = false;
   private overMessage = 'ABSORBED BY THE SENTINEL';
   private transitionTo: number | null = null;
@@ -27,11 +29,13 @@ export class Game {
 
   constructor(hud?: HUD) {
     this.state = createInitialGameState();
-    this.world = new World();
+    // New games start at landscape 0000 like the 1986 original: no sentries.
+    this.world = new World(0);
     this.player = new Player(this.world);
     this.sentinel = new Sentinel();
+    this.sentries = this.createSentries();
     this.input = new InputManager();
-    this.renderer = new Renderer(this.world, this.player, this.sentinel);
+    this.renderer = new Renderer(this.world, this.player, this.sentinel, this.sentries);
     this.gameLoop = new GameLoop(this.update.bind(this));
     if (hud) this.hud = hud;
 
@@ -52,12 +56,21 @@ export class Game {
     this.player = new Player(this.world);
     this.player.energy = energy;
     this.sentinel = new Sentinel();
-    this.renderer = new Renderer(this.world, this.player, this.sentinel);
+    this.sentries = this.createSentries();
+    this.renderer = new Renderer(this.world, this.player, this.sentinel, this.sentries);
     this.renderer.initialize();
     const spawn = this.findSpawnCell();
     this.player.setPosition((spawn.x + 0.5) * 4, 0, (spawn.z + 0.5) * 4);
     this.state = createInitialGameState();
     this.hud?.clearMessage();
+  }
+
+  private createSentries(): Sentry[] {
+    return this.world.getSentries().map((post) => new Sentry(post.x, post.z));
+  }
+
+  private sentryAt(x: number, z: number): Sentry | undefined {
+    return this.sentries.find((sentry) => !sentry.absorbed && sentry.x === x && sentry.z === z);
   }
 
   private findSpawnCell(): { x: number; z: number } {
@@ -72,6 +85,7 @@ export class Game {
         if (structure && x === structure.x && z === structure.z) continue;
         const object = this.world.getObject(x, z);
         if (object !== 'empty' && object !== 'boulder') continue;
+        if (this.sentryAt(x, z)) continue;
         const height = this.world.getHeight(x, z);
         const distance = (x - center) * (x - center) + (z - center) * (z - center);
         if (height < bestHeight || (height === bestHeight && distance > bestDistance)) {
@@ -106,7 +120,12 @@ export class Game {
     if (this.sentinel.update(deltaTime, this.world, this.player)) {
       this.renderer.updateTerrain();
     }
-    this.hud?.setWarning(this.sentinel.warning);
+    for (const sentry of this.sentries) {
+      if (sentry.update(deltaTime, this.world, this.player)) {
+        this.renderer.updateTerrain();
+      }
+    }
+    this.hud?.setWarning(this.sentinel.warning || this.sentries.some((sentry) => sentry.warning));
     if (!this.over && this.player.energy <= 0) {
       this.endGame(this.overMessage);
     }
@@ -133,6 +152,7 @@ export class Game {
   private describeTarget(target: SightTarget | null): string {
     if (!target) return 'Mira: —';
     if (target.tower) return 'Mira: torre';
+    if (this.sentryAt(target.x, target.z)) return 'Mira: sentry';
     const stack = this.world.getStack(target.x, target.z);
     const suffix = stack > 0 ? ` x${stack + 1}` : '';
     return `Mira: (${target.x},${target.z}) ${this.world.getObject(target.x, target.z)}${suffix}`;
@@ -183,6 +203,10 @@ export class Game {
     if (target.tower) {
       return this.absorbSentinel();
     }
+    const sentry = this.sentryAt(target.x, target.z);
+    if (sentry) {
+      return this.absorbSentry(sentry);
+    }
     const object = this.world.getObject(target.x, target.z);
     if (object !== 'tree' && object !== 'boulder' && object !== 'robot') return false;
     const current = this.player.currentCell();
@@ -201,6 +225,13 @@ export class Game {
     this.world.setTowerOpen(true);
     this.sentinel.absorbed = true;
     this.player.addEnergy(SENTINEL_ENERGY);
+    return true;
+  }
+
+  private absorbSentry(sentry: Sentry): boolean {
+    if (this.player.position.y <= this.world.columnTopAt(sentry.x, sentry.z)) return false;
+    sentry.absorbed = true;
+    this.player.addEnergy(getObjectEnergy('sentry'));
     return true;
   }
 

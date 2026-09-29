@@ -8,8 +8,8 @@ export class Sentinel extends Entity {
     absorbed = false;
     drainAccumulator = 0;
     absorbAccumulator = 0;
-    constructor(x = 8, z = 8) {
-        super('sentinel', x, z);
+    constructor(x = 8, z = 8, id = 'sentinel') {
+        super(id, x, z);
     }
     eyePosition(world) {
         const x = this.x * CELL_SIZE + CELL_SIZE / 2;

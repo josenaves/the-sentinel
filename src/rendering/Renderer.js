@@ -10,19 +10,21 @@ export class Renderer {
     camera;
     terrainRenderer;
     structureMesh = null;
-    sentinelHead = null;
+    watcherHeads = [];
     world;
     player;
     sentinel = null;
+    sentries = [];
     container;
     onResizeBound = () => {
         this.onResize();
     };
-    constructor(world, player, sentinel) {
+    constructor(world, player, sentinel, sentries = []) {
         this.world = world;
         this.player = player;
         if (sentinel)
             this.sentinel = sentinel;
+        this.sentries = sentries;
         this.scene = new Scene();
         this.scene.background = new Color(0x87ceeb);
         this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
@@ -43,7 +45,7 @@ export class Renderer {
         this.scene.add(this.terrainRenderer.getRobotBodyMesh());
         this.scene.add(this.terrainRenderer.getRobotHeadMesh());
         this.createVerticalStructure();
-        this.createSentinelHead();
+        this.createWatcherHeads();
         this.container = document.getElementById('app');
         this.container.appendChild(this.renderer.domElement);
         window.addEventListener('resize', this.onResizeBound);
@@ -75,15 +77,22 @@ export class Renderer {
         this.structureMesh.instanceMatrix.needsUpdate = true;
         this.scene.add(this.structureMesh);
     }
-    createSentinelHead() {
-        if (!this.sentinel)
-            return;
-        const structure = this.world.getVerticalStructure();
-        if (!structure)
-            return;
+    createWatcherHeads() {
+        if (this.sentinel) {
+            const structure = this.world.getVerticalStructure();
+            if (structure) {
+                const baseTop = this.world.getHeight(structure.x, structure.z) * CELL_SIZE;
+                this.createWatcherHead(this.sentinel, structure.x, structure.z, baseTop + structure.height * CELL_SIZE, 1, 0x2a1b5a, 0x3a2a6e);
+            }
+        }
+        for (const sentry of this.sentries) {
+            this.createWatcherHead(sentry, sentry.x, sentry.z, this.world.columnTopAt(sentry.x, sentry.z), 0.7, 0x5a1f1f, 0x722929);
+        }
+    }
+    createWatcherHead(entity, cellX, cellZ, baseY, scale, robeColor, hoodColor) {
         const group = new Group();
-        const robeMaterial = new MeshStandardMaterial({ color: 0x2a1b5a, roughness: 0.8, flatShading: true });
-        const hoodMaterial = new MeshStandardMaterial({ color: 0x3a2a6e, roughness: 0.8, flatShading: true });
+        const robeMaterial = new MeshStandardMaterial({ color: robeColor, roughness: 0.8, flatShading: true });
+        const hoodMaterial = new MeshStandardMaterial({ color: hoodColor, roughness: 0.8, flatShading: true });
         const eyeMaterial = new MeshStandardMaterial({ color: 0x201a00, emissive: 0xffdd44 });
         const robe = new Mesh(new CylinderGeometry(0.9, 2.0, 4.5, 7), robeMaterial);
         robe.position.y = 2.25;
@@ -98,9 +107,9 @@ export class Renderer {
             eye.position.set(0.55 * side, 5.4, 1.25);
             group.add(eye);
         }
-        const baseTop = this.world.getHeight(structure.x, structure.z) * CELL_SIZE;
-        group.position.set((structure.x + 0.5) * CELL_SIZE, baseTop + structure.height * CELL_SIZE, (structure.z + 0.5) * CELL_SIZE);
-        this.sentinelHead = group;
+        group.scale.setScalar(scale);
+        group.position.set((cellX + 0.5) * CELL_SIZE, baseY, (cellZ + 0.5) * CELL_SIZE);
+        this.watcherHeads.push({ group, entity });
         this.scene.add(group);
     }
     initialize() {
@@ -110,9 +119,9 @@ export class Renderer {
         this.terrainRenderer.update();
     }
     render() {
-        if (this.sentinelHead && this.sentinel) {
-            this.sentinelHead.rotation.y = this.sentinel.angle;
-            this.sentinelHead.visible = !this.sentinel.absorbed;
+        for (const { group, entity } of this.watcherHeads) {
+            group.rotation.y = entity.angle;
+            group.visible = !entity.absorbed;
         }
         this.camera.position.set(this.player.position.x, this.player.position.y, this.player.position.z);
         const lookAt = new Vector3();
@@ -130,17 +139,17 @@ export class Renderer {
     dispose() {
         window.removeEventListener('resize', this.onResizeBound);
         this.terrainRenderer.dispose();
-        if (this.sentinelHead) {
-            this.sentinelHead.traverse((child) => {
+        for (const { group } of this.watcherHeads) {
+            group.traverse((child) => {
                 const mesh = child;
                 if (mesh.isMesh) {
                     mesh.geometry.dispose();
                     mesh.material.dispose();
                 }
             });
-            this.scene.remove(this.sentinelHead);
-            this.sentinelHead = null;
+            this.scene.remove(group);
         }
+        this.watcherHeads = [];
         if (this.structureMesh) {
             this.structureMesh.geometry.dispose();
             this.structureMesh.material.dispose();

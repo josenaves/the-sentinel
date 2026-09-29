@@ -12,8 +12,8 @@ export class Sentinel extends Entity {
   private drainAccumulator = 0;
   private absorbAccumulator = 0;
 
-  constructor(x = 8, z = 8) {
-    super('sentinel', x, z);
+  constructor(x = 8, z = 8, id = 'sentinel') {
+    super(id, x, z);
   }
 
   eyePosition(world: World): { x: number; y: number; z: number } {

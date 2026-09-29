@@ -114,4 +114,25 @@ describe('World', () => {
         }
         expect(b.getVerticalStructure()).toEqual(a.getVerticalStructure());
     });
+    it('should place no sentries on early landscapes', () => {
+        expect(new World(0).getSentries()).toEqual([]);
+        expect(new World(1499).getSentries()).toEqual([]);
+    });
+    it('should place one sentry on landscape 2345', () => {
+        const world = new World(2345);
+        const posts = world.getSentries();
+        expect(posts).toHaveLength(1);
+        const post = posts[0];
+        expect(post.x).toBeGreaterThanOrEqual(0);
+        expect(post.x).toBeLessThan(16);
+        expect(post.z).toBeGreaterThanOrEqual(0);
+        expect(post.z).toBeLessThan(16);
+        expect(world.isTowerCell(post.x, post.z)).toBe(false);
+        expect(world.getObject(post.x, post.z)).toBe('empty');
+    });
+    it('should place sentries deterministically and cap at five', () => {
+        expect(new World(5000).getSentries()).toEqual(new World(5000).getSentries());
+        expect(new World(5000).getSentries()).toHaveLength(3);
+        expect(new World(9999).getSentries()).toHaveLength(5);
+    });
 });

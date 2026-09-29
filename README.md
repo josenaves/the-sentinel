@@ -78,11 +78,16 @@ Key principle: **Game logic is independent of Three.js**. The world can be teste
 
 | Key | Action |
 |-----|--------|
-| W / S | Forward / Backward |
-| A / D | Strafe Left / Right |
-| Mouse | Look around |
-| Click | Lock pointer |
-| ESC | Release pointer |
+| Arrows / Mouse | Look around |
+| Click | Capture mouse |
+| A | Absorb aimed object |
+| T | Create tree (-1) |
+| B | Create boulder (-2) |
+| R | Create robot (-3) |
+| Q | Transfer to aimed robot |
+| H | Hyperspace (-3) |
+| U | U-turn |
+| ESC | Release mouse |
 
 ## License
 

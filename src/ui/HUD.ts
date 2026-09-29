@@ -132,6 +132,66 @@ export class HUD {
     this.overlay = null;
   }
 
+  showStartPanel(onStart: () => void): void {
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+      position: fixed;
+      left: 50%;
+      top: 35%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #ffffff;
+      padding: 24px 32px;
+      font-family: monospace;
+      font-size: 16px;
+      line-height: 1.8;
+      text-align: center;
+      cursor: pointer;
+      z-index: 10;
+    `;
+    panel.innerHTML = `
+      <div style="font-size: 24px; font-weight: bold;">SENTINEL-3D</div>
+      <div>Absorb the Sentinel on the tower, then hyperspace out.</div>
+      <div>A absorb | T tree | B boulder | R robot | Q transfer | H hyper</div>
+      <div style="margin-top: 12px; color: #ffdf6b;">CLICK TO PLAY</div>
+    `;
+    panel.addEventListener('click', () => {
+      panel.parentNode?.removeChild(panel);
+      onStart();
+    });
+    document.body.appendChild(panel);
+  }
+
+  showGameOverPanel(message: string, onRestart: () => void): void {
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+      position: fixed;
+      left: 50%;
+      top: 40%;
+      transform: translate(-50%, -50%);
+      color: #ff4444;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #ff4444;
+      padding: 24px 32px;
+      font-family: monospace;
+      font-size: 20px;
+      line-height: 2;
+      text-align: center;
+      cursor: pointer;
+      z-index: 10;
+    `;
+    panel.innerHTML = `
+      <div style="font-size: 28px;">${message}</div>
+      <div style="font-size: 16px; color: #ffffff;">CLICK TO TRY AGAIN</div>
+    `;
+    panel.addEventListener('click', () => {
+      panel.parentNode?.removeChild(panel);
+      onRestart();
+    });
+    document.body.appendChild(panel);
+  }
+
   dispose(): void {
     this.clearMessage();
     if (this.element.parentNode) {

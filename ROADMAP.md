@@ -49,8 +49,12 @@
 - [x] Victory hyperspace loads next landscape (present + energy)
 - [x] Energy carry-over, deterministic generation, landscape HUD
 
-## MILESTONE 12
-Polish (screens, sounds, HUD final)
+## ✅ MILESTONE 12 - Polish (COMPLETE)
+- [x] Start panel with goal and controls
+- [x] Game-over panel with click-to-restart
+- [x] WebAudio synth sounds (no dependencies)
+- [x] Landscape counter, objective hints, sentry/meanie warnings
+- [x] README controls and docs
 
 ## Backlog (verificação em jogo)
 

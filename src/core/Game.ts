@@ -11,7 +11,8 @@ import { Renderer } from '../rendering/Renderer.js';
 import type { HUD } from '../ui/HUD.js';
 import type { CellObject } from '../world/Cell.js';
 import { getObjectEnergy } from '../world/Cell.js';
-import { TREE_COST, BOULDER_COST, ROBOT_COST, HYPERSPACE_COST, SENTINEL_ENERGY, MEANIE_ROTATION_SPEED } from './Constants.js';
+import { Sound } from '../audio/Sound.js';
+import { TREE_COST, BOULDER_COST, ROBOT_COST, HYPERSPACE_COST, SENTINEL_ENERGY, STARTING_ENERGY, MEANIE_ROTATION_SPEED } from './Constants.js';
 
 export class Game {
   private state: GameState;
@@ -24,6 +25,9 @@ export class Game {
   private sentinel: Sentinel;
   private sentries: Sentry[] = [];
   private meanie: Meanie | null = null;
+  private sound = new Sound();
+  private started = false;
+  private warned = false;
   private over = false;
   private overMessage = 'ABSORBED BY THE SENTINEL';
   private transitionTo: number | null = null;
@@ -42,12 +46,32 @@ export class Game {
     if (hud) this.hud = hud;
 
     this.initialize();
+    if (this.hud) {
+      this.hud.showStartPanel(() => this.startGame());
+    } else {
+      this.startGame();
+    }
   }
 
   private initialize(): void {
     this.renderer.initialize();
     const spawn = this.findSpawnCell();
     this.player.setPosition((spawn.x + 0.5) * 4, 0, (spawn.z + 0.5) * 4);
+  }
+
+  private startGame(): void {
+    if (this.started) return;
+    this.started = true;
+    this.sound.unlock();
+    this.gameLoop.start();
+  }
+
+  private restart(): void {
+    this.over = false;
+    this.warned = false;
+    this.loadLandscape(0);
+    this.player.energy = STARTING_ENERGY;
+    this.sound.unlock();
     this.gameLoop.start();
   }
 
@@ -102,6 +126,10 @@ export class Game {
   }
 
   private update(deltaTime: number): void {
+    if (!this.started) {
+      this.renderer.render();
+      return;
+    }
     if (this.transitionTo !== null) {
       this.transitionTimer -= deltaTime;
       if (this.transitionTimer <= 0) {
@@ -128,7 +156,12 @@ export class Game {
         this.renderer.updateTerrain();
       }
     }
-    this.hud?.setWarning(this.sentinel.warning || this.sentries.some((sentry) => sentry.warning));
+    const warning = this.sentinel.warning || this.sentries.some((sentry) => sentry.warning);
+    this.hud?.setWarning(warning);
+    if (warning && !this.warned) {
+      this.sound.alarm();
+    }
+    this.warned = warning;
     this.updateMeanie(deltaTime);
     this.hud?.setMeanie(this.meanie !== null);
     if (!this.over && this.player.energy <= 0) {
@@ -174,14 +207,16 @@ export class Game {
   private endGame(message: string): void {
     if (this.over) return;
     this.over = true;
-    this.hud?.showMessage(message);
+    this.sound.lose();
     this.gameLoop.stop();
+    this.hud?.showGameOverPanel(message, () => this.restart());
   }
 
   private handleActions(input: InputState, target: SightTarget | null): void {
     if (input.hyperspace) {
       if (this.hyperspace()) {
         this.renderer.updateTerrain();
+        this.sound.hyperspace();
       }
       return;
     }
@@ -206,6 +241,9 @@ export class Game {
     }
     if (changed) {
       this.renderer.updateTerrain();
+      if (input.absorb) this.sound.absorb();
+      else if (input.transfer) this.sound.transfer();
+      else this.sound.create();
     }
   }
 
@@ -276,6 +314,7 @@ export class Game {
       if (!spot) continue;
       this.meanie = new Meanie(spot.x, spot.z);
       this.renderer.setMeanie(this.meanie);
+      this.sound.meanie();
       break;
     }
   }
@@ -308,6 +347,7 @@ export class Game {
       this.player.spendEnergy(HYPERSPACE_COST);
       const next = this.world.getLandscapeNumber() + this.player.energy;
       this.hud?.showMessage(`LANDSCAPE COMPLETE — NEXT ${next}`);
+      this.sound.win();
       this.transitionTo = next;
       this.transitionTimer = 2.5;
       return false;

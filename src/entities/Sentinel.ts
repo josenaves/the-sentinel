@@ -1,7 +1,6 @@
 import { Entity } from './Entity.js';
 import type { World } from '../world/World.js';
 import type { Player } from '../player/Player.js';
-import { getObjectEnergy } from '../world/Cell.js';
 import { CELL_SIZE, SENTINEL_ROTATION_SPEED, SENTINEL_FOV, SENTINEL_SCAN_GRACE, SENTINEL_DRAIN_INTERVAL } from '../core/Constants.js';
 
 export class Sentinel extends Entity {
@@ -133,12 +132,22 @@ export class Sentinel extends Entity {
   }
 
   private consume(victim: { x: number; z: number }, world: World, player: Player, random: () => number): void {
+    // Like the original, energy is reduced to 1 one unit at a time: a robot
+    // becomes a boulder, a boulder becomes a tree. Totals stay constant.
     const object = world.getObject(victim.x, victim.z);
-    let taken = false;
-    if (object === 'boulder') taken = world.takeBoulder(victim.x, victim.z);
-    else if (object === 'robot') taken = world.takeRobot(victim.x, victim.z, false);
-    if (!taken) return;
-    this.regrowTrees(getObjectEnergy(object), world, player, random);
+    if (object === 'robot') {
+      world.setObject(victim.x, victim.z, 'boulder');
+      this.regrowTrees(1, world, player, random);
+    } else if (object === 'boulder') {
+      if (world.getStack(victim.x, victim.z) <= 1) {
+        world.setStack(victim.x, victim.z, 0);
+        world.setObject(victim.x, victim.z, 'tree');
+        this.regrowTrees(1, world, player, random);
+      } else {
+        if (!world.takeBoulder(victim.x, victim.z)) return;
+        this.regrowTrees(2, world, player, random);
+      }
+    }
   }
 
   private regrowTrees(count: number, world: World, player: Player, random: () => number): void {

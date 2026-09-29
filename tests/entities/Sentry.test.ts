@@ -50,7 +50,7 @@ describe('Sentry', () => {
     expect(player.energy).toBe(8);
   });
 
-  it('should absorb a visible boulder from its square', () => {
+  it('should reduce a visible boulder to a tree', () => {
     const world = flatWorld();
     clearWorld(world);
     const player = new Player(world);
@@ -59,10 +59,10 @@ describe('Sentry', () => {
     sentry.angle = 0;
     world.placeBoulder(8, 10);
 
-    const changed = sentry.update(1, world, player, cyclingRandom([0, 0, 0, 0.5]));
+    const changed = sentry.update(1, world, player, cyclingRandom([0, 0]));
 
     expect(changed).toBe(true);
-    expect(world.getObject(8, 10)).toBe('empty');
+    expect(world.getObject(8, 10)).toBe('tree');
     expect(countTrees(world)).toBe(2);
   });
 

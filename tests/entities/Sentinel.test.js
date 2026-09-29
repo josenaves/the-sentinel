@@ -105,16 +105,16 @@ describe('Sentinel', () => {
         expect(sentinel.seesHead(world, player)).toBe(true);
         expect(sentinel.seesSquare(world, player)).toBe(true);
     });
-    it('should absorb a visible boulder and regrow its energy as trees', () => {
+    it('should reduce a lone boulder to a tree, regrowing one tree', () => {
         const world = flatWorld();
         clearWorld(world);
         const player = hiddenPlayer(world);
         const sentinel = new Sentinel();
         sentinel.angle = 0;
         world.placeBoulder(8, 10);
-        const changed = sentinel.update(1, world, player, cyclingRandom([0, 0, 0, 0.5]));
+        const changed = sentinel.update(1, world, player, cyclingRandom([0, 0]));
         expect(changed).toBe(true);
-        expect(world.getObject(8, 10)).toBe('empty');
+        expect(world.getObject(8, 10)).toBe('tree');
         expect(world.getStack(8, 10)).toBe(0);
         expect(countTrees(world)).toBe(2);
         expect(player.energy).toBe(10);
@@ -131,16 +131,19 @@ describe('Sentinel', () => {
         expect(world.getObject(8, 10)).toBe('tree');
         expect(countTrees(world)).toBe(1);
     });
-    it('should absorb a robot shell and regrow three trees', () => {
+    it('should reduce a robot shell to a boulder, then to a tree', () => {
         const world = flatWorld();
         clearWorld(world);
         const player = hiddenPlayer(world);
         const sentinel = new Sentinel();
         sentinel.angle = 0;
         world.placeRobot(8, 10);
-        const changed = sentinel.update(1, world, player, cyclingRandom([0, 0, 0, 0.25, 0, 0.5]));
-        expect(changed).toBe(true);
-        expect(world.getObject(8, 10)).toBe('empty');
+        const random = cyclingRandom([0, 0, 0, 0.5]);
+        expect(sentinel.update(1, world, player, random)).toBe(true);
+        expect(world.getObject(8, 10)).toBe('boulder');
+        expect(countTrees(world)).toBe(1);
+        expect(sentinel.update(1, world, player, random)).toBe(true);
+        expect(world.getObject(8, 10)).toBe('tree');
         expect(countTrees(world)).toBe(3);
     });
     it('should not absorb the shell the player stands on', () => {

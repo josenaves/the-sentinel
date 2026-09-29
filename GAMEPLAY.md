@@ -90,9 +90,11 @@ turn without seeing it, it reverts to a tree. Absorbing the tree
 
 ## Sentries
 
-Guardian entities on later landscapes (1 per 1500 landscape numbers,
-up to 5; none below 1500). New games start at landscape 0000 with no
-sentries, like the 1986 original. They behave like the Sentinel — rotating
+Guardian entities on later landscapes, counted like the 1986
+original: thousands digit plus two, adjusted by RNG down into 0..7
+(never above 7), and capped at the tens digit below landscape 100 —
+so landscape 0000 has none. New games start at landscape 0000 with
+no sentries. They behave like the Sentinel — rotating
 gaze, energy drain, landscape absorption — but stand on ordinary
 squares instead of a tower. Absorbing them is optional: aim at the
 sentry while looking down on its square (`A`, +4 energy). They are

@@ -1,6 +1,6 @@
 import { Terrain } from './Terrain.js';
 import { WorldGenerator } from './WorldGenerator.js';
-import { CELL_SIZE, SIGHT_RANGE, LANDSCAPE_COUNT, MAX_SENTRIES, LANDSCAPES_PER_SENTRY } from '../core/Constants.js';
+import { CELL_SIZE, SIGHT_RANGE, LANDSCAPE_COUNT, MAX_SENTRIES } from '../core/Constants.js';
 export class World {
     terrain;
     verticalStructure = null;
@@ -217,16 +217,16 @@ export class World {
         };
     }
     placeSentries() {
-        const count = Math.min(MAX_SENTRIES, Math.floor(this.landscapeNumber / LANDSCAPES_PER_SENTRY));
-        const posts = [];
-        if (count === 0)
-            return posts;
         const size = this.terrain.getSize();
         let state = this.landscapeNumber >>> 0;
         const random = () => {
             state = (state * 1664525 + 1013904223) >>> 0;
             return state / 0x100000000;
         };
+        const count = this.sentryCount(random);
+        const posts = [];
+        if (count === 0)
+            return posts;
         const total = size * size;
         const indices = Array.from({ length: total }, (_, i) => i);
         for (let i = indices.length - 1; i > 0; i--) {
@@ -247,5 +247,31 @@ export class World {
             posts.push({ x, z });
         }
         return posts;
+    }
+    // Sentry count like the 1986 original: thousands digit plus two, adjusted
+    // by leading zeros of RNG bits (negated when bit 7 is set), kept in
+    // 0..MAX_SENTRIES; below landscape 100 it is capped at the tens digit.
+    sentryCount(random) {
+        let count = 0;
+        for (let attempt = 0; attempt < 20; attempt++) {
+            const value = Math.floor(random() * 256);
+            let adjust = 0;
+            for (let bit = 6; bit >= 0; bit--) {
+                if ((value & (1 << bit)) === 0)
+                    adjust++;
+                else
+                    break;
+            }
+            if ((value & 0x80) !== 0)
+                adjust = ~adjust;
+            const total = Math.floor(this.landscapeNumber / 1000) + 2 + adjust;
+            count = Math.max(0, Math.min(MAX_SENTRIES, total));
+            if (total >= 0 && total <= MAX_SENTRIES)
+                break;
+        }
+        if (this.landscapeNumber < 100) {
+            count = Math.min(count, Math.floor(this.landscapeNumber / 10));
+        }
+        return count;
     }
 }

@@ -13,40 +13,45 @@
 - [x] Lighting: ambient + directional + shadows + fog
 - [x] Vertical structure at world center
 - [x] Minimal HUD
-- [x] Unit tests (36 passing)
+- [x] Unit tests (200 passing)
 - [x] Build passes
 
-## MILESTONE 2
-Terrain (procedural generation improvements, biome variation)
+## ✅ MILESTONE 2 - Terrain (COMPLETE)
+- [x] Seeded procedural generation (WorldGenerator + 16x16 stepped heights)
+- [x] Trees/boulders scatter, deterministic per landscape number
 
-## MILESTONE 3
-Player (refined controls, collision, camera smoothing)
+## ✅ MILESTONE 3 - Player (COMPLETE)
+- [x] First-person controls, pointer-lock mouse look, terrain-following eye
+- [x] Tower-platform eye height on transfer
 
-## MILESTONE 4
-Interaction (absorption, creation)
+## ✅ MILESTONE 4 - Interaction (COMPLETE)
+- [x] Absorption (tree/boulder/robot/sentinel/sentry/meanie-tree) and creation
+- [x] Raycast aim with full-board sight range
 
-## MILESTONE 5
-Energy (resource system)
+## ✅ MILESTONE 5 - Energy (COMPLETE)
+- [x] Costs, constant total energy, regrow-trees balancing
 
-## MILESTONE 6
-Construction (vertical structures)
+## ✅ MILESTONE 6 - Construction (COMPLETE)
+- [x] Boulder stacking, climbing, safe spawn/hyperspace cells
 
-## MILESTONE 7
-Clones (player duplicates)
+## ✅ MILESTONE 7 - Clones (COMPLETE)
+- [x] Robot shells (R), consciousness transfer (Q), husk recovery
 
-## MILESTONE 8
-Sentinel (main antagonist)
+## ✅ MILESTONE 8 - Sentinel (COMPLETE)
+- [x] Rotating gaze, grace + drain, landscape absorption (gradual)
+- [x] Absorb from above (+4), tower opens
 
-## MILESTONE 9
-Sentries (guardian entities)
+## ✅ MILESTONE 9 - Sentries (COMPLETE)
+- [x] Original count ritual (thousands+2, cap 7, tens-cap below 100)
+- [x] Guardians with gaze/drain/absorption, optional absorb (+4)
 
-## MILESTONE 10
-Level system
-
-## MILESTONE 11
-Procedural worlds
+## ✅ MILESTONE 10/11 - Level system / Procedural worlds (COMPLETE)
+- [x] Victory hyperspace loads next landscape (present + energy)
+- [x] Energy carry-over, deterministic generation, landscape HUD
 
 ## MILESTONE 12
-Polish
+Polish (screens, sounds, HUD final)
 
-Each milestone will be implemented only when requested.
+## Backlog (verificação em jogo)
+
+- [ ] Meanie: confirmar encontro em gameplay real e ajustar o trigger (cabeça visível sem o tile + árvore próxima) se estiver raro demais

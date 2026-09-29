@@ -47,6 +47,9 @@ export class Game {
                 const structure = this.world.getVerticalStructure();
                 if (structure && x === structure.x && z === structure.z)
                     continue;
+                const object = this.world.getObject(x, z);
+                if (object !== 'empty' && object !== 'boulder')
+                    continue;
                 const height = this.world.getHeight(x, z);
                 const distance = (x - center) * (x - center) + (z - center) * (z - center);
                 if (height < bestHeight || (height === bestHeight && distance > bestDistance)) {
@@ -65,7 +68,10 @@ export class Game {
         const aimTarget = this.world.raycastAim(this.player.position, this.aimDirection());
         this.handleActions(inputState, aimTarget);
         this.hud?.setTarget(this.describeTarget(aimTarget));
-        this.sentinel.update(deltaTime, this.world, this.player);
+        this.hud?.setObjective(this.describeObjective());
+        if (this.sentinel.update(deltaTime, this.world, this.player)) {
+            this.renderer.updateTerrain();
+        }
         this.hud?.setWarning(this.sentinel.warning);
         if (!this.over && this.player.energy <= 0) {
             this.endGame(this.overMessage);
@@ -94,6 +100,14 @@ export class Game {
         const stack = this.world.getStack(target.x, target.z);
         const suffix = stack > 0 ? ` x${stack + 1}` : '';
         return `Mira: (${target.x},${target.z}) ${this.world.getObject(target.x, target.z)}${suffix}`;
+    }
+    describeObjective() {
+        if (!this.world.isTowerOpen())
+            return 'OBJ: suba acima da torre e absorva o Sentinel (A)';
+        const current = this.player.currentCell();
+        if (this.world.isTowerCell(current.x, current.z))
+            return 'OBJ: pressione H para vencer!';
+        return 'OBJ: torre aberta! R na torre, Q, depois H';
     }
     endGame(message) {
         if (this.over)

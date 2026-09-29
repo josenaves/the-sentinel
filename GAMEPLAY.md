@@ -61,8 +61,10 @@ stands on.
 Absorb the Sentinel (`A` on the tower, +4 energy) only while your eye
 is above its platform: you must look down on it. The Sentinel stops
 scanning, its platform opens for robot placement, and absorbing
-anything else is over (creation and transfer still work). Transfer
-onto the tower square and hyperspace (`H`) to complete the landscape;
+anything else is over (creation and transfer still work). Create the
+shell (`R`) on the tower square while looking down from above (from
+below, neighboring squares block the aim), transfer (`Q`) onto it and
+hyperspace (`H`) to complete the landscape;
 the next landscape number is shown (present + energy after the jump),
 following the original code formula. Loading it is a future level
 milestone.
@@ -73,8 +75,10 @@ Perched on the tower, rotating slowly. If you are inside its gaze
 cone with a clear line of sight, the warning shows: after ~5s of
 continuous exposure it drains 1 energy per second. Break line of
 sight (or leave the cone) to reset. At 0 energy you are absorbed:
-game over. (Meanie/hyperspace and absorbing the Sentinel itself are
-future milestones.)
+game over. It also absorbs boulders and robot shells it sees (never
+trees, never the shell you stand on): each absorbed energy unit
+regrows as a random tree elsewhere, keeping total energy constant.
+(Meanie is a future milestone.)
 
 Later may have:
 

@@ -65,7 +65,7 @@ export class Player {
   private groundEyeHeight(worldX: number, worldZ: number): number {
     const cellX = Math.floor(worldX / CELL_SIZE);
     const cellZ = Math.floor(worldZ / CELL_SIZE);
-    return (this.world.surfaceLevel(cellX, cellZ) + 1) * CELL_SIZE + PLAYER_HEIGHT;
+    return this.world.columnTopAt(cellX, cellZ) + PLAYER_HEIGHT;
   }
 
   canAfford(cost: number): boolean {

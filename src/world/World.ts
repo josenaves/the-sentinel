@@ -181,6 +181,8 @@ export class World {
       if (x === fromX && z === fromZ) continue;
       if (this.terrain.surfaceLevel(x, z) > height) continue;
       if (this.isTowerCell(x, z)) continue;
+      const object = this.terrain.getObject(x, z);
+      if (object !== 'empty' && object !== 'boulder') continue;
       return { x, z };
     }
     return null;

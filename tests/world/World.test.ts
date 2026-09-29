@@ -60,6 +60,50 @@ describe('World', () => {
     expect(world.pickHyperspaceDestination(5, 5, () => 0.5)).toBeNull();
   });
 
+  it('should never hyperspace onto a tree or robot cell', () => {
+    const world = new World(0);
+    for (let z = 0; z < 16; z++) {
+      for (let x = 0; x < 16; x++) {
+        world.setHeight(x, z, 0);
+        world.setObject(x, z, 'tree');
+        world.setStack(x, z, 0);
+      }
+    }
+    world.setObject(3, 3, 'empty');
+
+    let i = 0;
+    const sequence = [0, 0, 51 / 256, 51 / 256];
+    const destination = world.pickHyperspaceDestination(5, 5, () => sequence[i++ % sequence.length]!);
+
+    expect(destination).toEqual({ x: 3, z: 3 });
+  });
+
+  it('should allow a robot shell on the open tower only', () => {
+    const world = new World(0);
+    const structure = world.getVerticalStructure()!;
+
+    expect(world.placeRobot(structure.x, structure.z)).toBe(false);
+
+    world.setTowerOpen(true);
+    expect(world.placeRobot(structure.x, structure.z)).toBe(true);
+    expect(world.getObject(structure.x, structure.z)).toBe('robot');
+    expect(world.takeRobot(structure.x, structure.z, false)).toBe(true);
+  });
+
+  it('should target the tower cell when aiming down from above', () => {
+    const world = new World(0);
+    for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) world.setHeight(x, z, 0);
+    const top = world.columnTopAt(8, 8);
+    const origin = { x: (8 + 0.5) * CELL_SIZE, y: top + 10, z: (8 + 0.5) * CELL_SIZE };
+
+    const target = world.raycastAim(origin, { x: 0, y: -1, z: 0 });
+
+    expect(target).not.toBeNull();
+    expect(target!.x).toBe(8);
+    expect(target!.z).toBe(8);
+    expect(target!.tower).toBe(true);
+  });
+
   it('should create vertical structure at center', () => {
     const world = new World(12345);
     const structure = world.getVerticalStructure();

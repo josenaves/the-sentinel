@@ -63,6 +63,16 @@ export class HUD {
     target.textContent = text;
   }
 
+  setObjective(text: string): void {
+    let objective = this.element.querySelector('[data-objective]');
+    if (!objective) {
+      objective = document.createElement('div');
+      objective.setAttribute('data-objective', 'true');
+      this.element.appendChild(objective);
+    }
+    objective.textContent = text;
+  }
+
   setWarning(active: boolean): void {
     let warning = this.element.querySelector('[data-warning]');
     if (!warning) {

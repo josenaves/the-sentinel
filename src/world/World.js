@@ -160,6 +160,9 @@ export class World {
                 continue;
             if (this.isTowerCell(x, z))
                 continue;
+            const object = this.terrain.getObject(x, z);
+            if (object !== 'empty' && object !== 'boulder')
+                continue;
             return { x, z };
         }
         return null;

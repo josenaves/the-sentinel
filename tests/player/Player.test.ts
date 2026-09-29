@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Player, type InputState } from '../../src/player/Player.js';
 import { World } from '../../src/world/World.js';
-import { MOUSE_SENSITIVITY, PAN_KEYBOARD_SPEED } from '../../src/core/Constants.js';
+import { MOUSE_SENSITIVITY, PAN_KEYBOARD_SPEED, CELL_SIZE, PLAYER_HEIGHT } from '../../src/core/Constants.js';
 
 function idleInput(): InputState {
   return { panLeft: false, panRight: false, panUp: false, panDown: false, mouseDeltaX: 0, mouseDeltaY: 0, absorb: false, createTree: false, createBoulder: false, createRobot: false, transfer: false, hyperspace: false, uturn: false };
@@ -64,6 +64,17 @@ describe('Player', () => {
     expect(player.position.z).toBeCloseTo((5 + 0.5) * 4, 10);
     expect(player.position.y).toBeCloseTo((2 + 1) * 4 + 1.7, 10);
     expect(player.currentCell()).toEqual({ x: 5, z: 5 });
+  });
+
+  it('should place the eye above the tower platform when transferring to it', () => {
+    const world = new World(0);
+    const structure = world.getVerticalStructure()!;
+    const player = new Player(world);
+    player.transferTo(structure.x, structure.z);
+
+    const naturalTop = (world.surfaceLevel(structure.x, structure.z) + 1) * CELL_SIZE;
+    expect(player.position.y).toBeCloseTo(world.columnTopAt(structure.x, structure.z) + PLAYER_HEIGHT, 10);
+    expect(player.position.y).toBeGreaterThan(naturalTop + PLAYER_HEIGHT);
   });
 
   it('should add and spend energy', () => {

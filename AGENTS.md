@@ -7,7 +7,7 @@
 3. Preserve existing internal APIs whenever possible.
 4. Do not introduce dependencies without justifying the need.
 5. Run tests after relevant changes.
-6. Run `npm run build` before considering a milestone complete.
+6. Run `bun run build` before considering a milestone complete.
 7. Do not mix rendering logic with game-domain logic.
 8. Do not implement future features prematurely.
 9. Prefer small, verifiable changes.

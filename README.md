@@ -16,13 +16,13 @@ The Sentinel is a classic atmospheric puzzle-strategy game where you explore a 3
 ## Installation
 
 ```bash
-npm install
+bun install
 ```
 
 ## Development
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 Opens the game at http://localhost:3000
@@ -30,13 +30,13 @@ Opens the game at http://localhost:3000
 ## Testing
 
 ```bash
-npm test
+bun run test
 ```
 
 ## Building
 
 ```bash
-npm run build
+bun run build
 ```
 
 Outputs to `dist/`

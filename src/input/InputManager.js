@@ -1,13 +1,18 @@
 export class InputManager {
+    static RELOCK_COOLDOWN_MS = 1500;
     keys = new Map();
     pressed = new Set();
     mouseDeltaX = 0;
     mouseDeltaY = 0;
     pointerLocked = false;
+    lastUnlockTime = 0;
     onKeyDownBound = (event) => {
         this.keys.set(event.code, true);
         if (!event.repeat) {
             this.pressed.add(event.code);
+        }
+        if (event.code === 'Escape') {
+            this.releasePointerLock();
         }
     };
     onKeyUpBound = (event) => {
@@ -23,7 +28,11 @@ export class InputManager {
         this.requestPointerLock();
     };
     onPointerLockChangeBound = () => {
-        this.pointerLocked = document.pointerLockElement === document.body;
+        const locked = document.pointerLockElement === document.body;
+        if (this.pointerLocked && !locked) {
+            this.lastUnlockTime = Date.now();
+        }
+        this.pointerLocked = locked;
     };
     onPointerLockErrorBound = () => {
         this.pointerLocked = false;
@@ -40,9 +49,25 @@ export class InputManager {
         document.addEventListener('pointerlockerror', this.onPointerLockErrorBound);
     }
     requestPointerLock() {
-        if (!this.pointerLocked) {
-            document.body.requestPointerLock?.();
+        if (this.pointerLocked) {
+            return;
         }
+        if (Date.now() - this.lastUnlockTime < InputManager.RELOCK_COOLDOWN_MS) {
+            return;
+        }
+        const result = document.body.requestPointerLock?.();
+        if (result instanceof Promise) {
+            result.catch(() => {
+                this.pointerLocked = false;
+            });
+        }
+    }
+    releasePointerLock() {
+        if (!this.pointerLocked && !document.pointerLockElement) {
+            return;
+        }
+        this.lastUnlockTime = Date.now();
+        document.exitPointerLock?.();
     }
     getInputState() {
         const state = {

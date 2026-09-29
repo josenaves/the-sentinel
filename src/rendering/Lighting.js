@@ -12,6 +12,6 @@ export function createLighting() {
     directional.shadow.camera.right = 100;
     directional.shadow.camera.top = 100;
     directional.shadow.camera.bottom = -100;
-    const fog = new Fog(0x87ceeb, 20, 150);
+    const fog = new Fog(0x87ceeb, 40, 190);
     return { ambient, directional, fog };
 }

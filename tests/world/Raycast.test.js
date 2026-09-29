@@ -26,6 +26,16 @@ describe('World.raycastAim', () => {
         const target = world.raycastAim({ x: 8 * 4 + 2, y: 10, z: 12 * 4 + 2 }, { x: 0, y: 0, z: -1 });
         expect(target).toEqual({ x: 8, z: 8, tower: true });
     });
+    it('should reach far cells from a high tower', () => {
+        const world = flatWorld();
+        const target = world.raycastAim({ x: 14 * 4 + 2, y: 100, z: 14 * 4 + 2 }, { x: 0, y: -1, z: 0 });
+        expect(target).toEqual({ x: 14, z: 14, tower: false });
+    });
+    it('should return null beyond sight range', () => {
+        const world = flatWorld();
+        const target = world.raycastAim({ x: 14 * 4 + 2, y: 200, z: 14 * 4 + 2 }, { x: 0, y: -1, z: 0 });
+        expect(target).toBeNull();
+    });
     it('should report line of sight over flat ground', () => {
         const world = flatWorld();
         expect(world.hasLineOfSight({ x: 8 * 4 + 2, y: 26, z: 8 * 4 + 2 }, { x: 8 * 4 + 2, y: 5.7, z: 12 * 4 + 2 })).toBe(true);

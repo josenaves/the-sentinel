@@ -66,8 +66,8 @@ shell (`R`) on the tower square while looking down from above (from
 below, neighboring squares block the aim), transfer (`Q`) onto it and
 hyperspace (`H`) to complete the landscape;
 the next landscape number is shown (present + energy after the jump),
-following the original code formula. Loading it is a future level
-milestone.
+following the original code formula, and the new landscape loads
+automatically with your remaining energy.
 
 ## Sentinel
 

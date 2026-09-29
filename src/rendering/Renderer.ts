@@ -17,6 +17,9 @@ export class Renderer {
   private player: Player;
   private sentinel: Sentinel | null = null;
   private container: HTMLElement;
+  private onResizeBound = (): void => {
+    this.onResize();
+  };
 
   constructor(world: World, player: Player, sentinel?: Sentinel) {
     this.world = world;
@@ -53,7 +56,7 @@ export class Renderer {
     this.container = document.getElementById('app')!;
     this.container.appendChild(this.renderer.domElement);
 
-    window.addEventListener('resize', this.onResize.bind(this));
+    window.addEventListener('resize', this.onResizeBound);
   }
 
   private createVerticalStructure(): void {
@@ -155,7 +158,7 @@ export class Renderer {
   }
 
   dispose(): void {
-    window.removeEventListener('resize', this.onResize.bind(this));
+    window.removeEventListener('resize', this.onResizeBound);
     this.terrainRenderer.dispose();
     if (this.sentinelHead) {
       this.sentinelHead.traverse((child) => {

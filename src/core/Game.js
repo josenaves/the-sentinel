@@ -18,6 +18,8 @@ export class Game {
     sentinel;
     over = false;
     overMessage = 'ABSORBED BY THE SENTINEL';
+    transitionTo = null;
+    transitionTimer = 0;
     constructor(hud) {
         this.state = createInitialGameState();
         this.world = new World();
@@ -35,6 +37,20 @@ export class Game {
         const spawn = this.findSpawnCell();
         this.player.setPosition((spawn.x + 0.5) * 4, 0, (spawn.z + 0.5) * 4);
         this.gameLoop.start();
+    }
+    loadLandscape(landscapeNumber) {
+        const energy = this.player.energy;
+        this.renderer.dispose();
+        this.world = new World(landscapeNumber);
+        this.player = new Player(this.world);
+        this.player.energy = energy;
+        this.sentinel = new Sentinel();
+        this.renderer = new Renderer(this.world, this.player, this.sentinel);
+        this.renderer.initialize();
+        const spawn = this.findSpawnCell();
+        this.player.setPosition((spawn.x + 0.5) * 4, 0, (spawn.z + 0.5) * 4);
+        this.state = createInitialGameState();
+        this.hud?.clearMessage();
     }
     findSpawnCell() {
         const size = this.world.getSize();
@@ -62,6 +78,16 @@ export class Game {
         return best;
     }
     update(deltaTime) {
+        if (this.transitionTo !== null) {
+            this.transitionTimer -= deltaTime;
+            if (this.transitionTimer <= 0) {
+                const next = this.transitionTo;
+                this.transitionTo = null;
+                this.loadLandscape(next);
+            }
+            this.renderer.render();
+            return;
+        }
         this.state.elapsedTime += deltaTime;
         const inputState = this.input.getInputState();
         this.player.update(deltaTime, inputState);
@@ -82,6 +108,7 @@ export class Game {
         this.state.player.rotation = this.player.rotation;
         this.state.player.pitch = this.player.pitch;
         this.hud?.setEnergy(this.player.energy);
+        this.hud?.setLandscape(this.world.getLandscapeNumber());
         this.renderer.render();
     }
     aimDirection() {
@@ -199,7 +226,9 @@ export class Game {
             }
             this.player.spendEnergy(HYPERSPACE_COST);
             const next = this.world.getLandscapeNumber() + this.player.energy;
-            this.endGame(`LANDSCAPE COMPLETE — NEXT ${next}`);
+            this.hud?.showMessage(`LANDSCAPE COMPLETE — NEXT ${next}`);
+            this.transitionTo = next;
+            this.transitionTimer = 2.5;
             return false;
         }
         if (!this.player.canAfford(HYPERSPACE_COST)) {

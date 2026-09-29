@@ -22,6 +22,8 @@ export class Game {
   private sentinel: Sentinel;
   private over = false;
   private overMessage = 'ABSORBED BY THE SENTINEL';
+  private transitionTo: number | null = null;
+  private transitionTimer = 0;
 
   constructor(hud?: HUD) {
     this.state = createInitialGameState();
@@ -41,6 +43,21 @@ export class Game {
     const spawn = this.findSpawnCell();
     this.player.setPosition((spawn.x + 0.5) * 4, 0, (spawn.z + 0.5) * 4);
     this.gameLoop.start();
+  }
+
+  private loadLandscape(landscapeNumber: number): void {
+    const energy = this.player.energy;
+    this.renderer.dispose();
+    this.world = new World(landscapeNumber);
+    this.player = new Player(this.world);
+    this.player.energy = energy;
+    this.sentinel = new Sentinel();
+    this.renderer = new Renderer(this.world, this.player, this.sentinel);
+    this.renderer.initialize();
+    const spawn = this.findSpawnCell();
+    this.player.setPosition((spawn.x + 0.5) * 4, 0, (spawn.z + 0.5) * 4);
+    this.state = createInitialGameState();
+    this.hud?.clearMessage();
   }
 
   private findSpawnCell(): { x: number; z: number } {
@@ -68,6 +85,16 @@ export class Game {
   }
 
   private update(deltaTime: number): void {
+    if (this.transitionTo !== null) {
+      this.transitionTimer -= deltaTime;
+      if (this.transitionTimer <= 0) {
+        const next = this.transitionTo;
+        this.transitionTo = null;
+        this.loadLandscape(next);
+      }
+      this.renderer.render();
+      return;
+    }
     this.state.elapsedTime += deltaTime;
 
     const inputState: InputState = this.input.getInputState();
@@ -90,6 +117,7 @@ export class Game {
     this.state.player.pitch = this.player.pitch;
 
     this.hud?.setEnergy(this.player.energy);
+    this.hud?.setLandscape(this.world.getLandscapeNumber());
     this.renderer.render();
   }
 
@@ -198,7 +226,9 @@ export class Game {
       }
       this.player.spendEnergy(HYPERSPACE_COST);
       const next = this.world.getLandscapeNumber() + this.player.energy;
-      this.endGame(`LANDSCAPE COMPLETE — NEXT ${next}`);
+      this.hud?.showMessage(`LANDSCAPE COMPLETE — NEXT ${next}`);
+      this.transitionTo = next;
+      this.transitionTimer = 2.5;
       return false;
     }
     if (!this.player.canAfford(HYPERSPACE_COST)) {

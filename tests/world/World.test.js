@@ -98,4 +98,20 @@ describe('World', () => {
         expect(structure?.z).toBe(Math.floor(WORLD_SIZE / 2));
         expect(structure?.height).toBeGreaterThan(0);
     });
+    it('should derive the landscape number from the seed', () => {
+        expect(new World(2572).getLandscapeNumber()).toBe(2572);
+        expect(new World(10000).getLandscapeNumber()).toBe(0);
+    });
+    it('should generate identical landscapes from the same number', () => {
+        const a = new World(2572);
+        const b = new World(2572);
+        for (let z = 0; z < 16; z++) {
+            for (let x = 0; x < 16; x++) {
+                expect(b.getHeight(x, z)).toBe(a.getHeight(x, z));
+                expect(b.getObject(x, z)).toBe(a.getObject(x, z));
+                expect(b.getStack(x, z)).toBe(a.getStack(x, z));
+            }
+        }
+        expect(b.getVerticalStructure()).toEqual(a.getVerticalStructure());
+    });
 });

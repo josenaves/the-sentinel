@@ -1,6 +1,7 @@
 export class HUD {
     element;
     crosshair;
+    overlay = null;
     constructor() {
         this.element = document.createElement('div');
         this.element.style.cssText = `
@@ -67,6 +68,15 @@ export class HUD {
         }
         objective.textContent = text;
     }
+    setLandscape(number) {
+        let landscape = this.element.querySelector('[data-landscape]');
+        if (!landscape) {
+            landscape = document.createElement('div');
+            landscape.setAttribute('data-landscape', 'true');
+            this.element.appendChild(landscape);
+        }
+        landscape.textContent = `Landscape ${String(number).padStart(4, '0')}`;
+    }
     setWarning(active) {
         let warning = this.element.querySelector('[data-warning]');
         if (!warning) {
@@ -78,8 +88,9 @@ export class HUD {
         warning.style.display = active ? 'block' : 'none';
     }
     showMessage(text) {
-        const overlay = document.createElement('div');
-        overlay.style.cssText = `
+        if (!this.overlay) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
       position: fixed;
       left: 50%;
       top: 40%;
@@ -90,10 +101,19 @@ export class HUD {
       pointer-events: none;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
     `;
-        overlay.textContent = text;
-        document.body.appendChild(overlay);
+            document.body.appendChild(overlay);
+            this.overlay = overlay;
+        }
+        this.overlay.textContent = text;
+    }
+    clearMessage() {
+        if (this.overlay?.parentNode) {
+            this.overlay.parentNode.removeChild(this.overlay);
+        }
+        this.overlay = null;
     }
     dispose() {
+        this.clearMessage();
         if (this.element.parentNode) {
             this.element.parentNode.removeChild(this.element);
         }

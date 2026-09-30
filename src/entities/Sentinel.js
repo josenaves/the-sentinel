@@ -39,8 +39,10 @@ export class Sentinel extends Entity {
         }
         return this.absorbLandscape(deltaTime, world, player, random);
     }
+    // Energy drain needs the full sighting like the 1986 original: seeing
+    // only the head (partial) cannot absorb energy, it may spawn a Meanie.
     seesPlayer(world, player) {
-        return this.seesHead(world, player);
+        return this.seesHead(world, player) && this.seesSquare(world, player);
     }
     seesHead(world, player) {
         const eye = this.eyePosition(world);

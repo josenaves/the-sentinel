@@ -27,6 +27,15 @@ export class World {
     getSentries() {
         return this.sentries;
     }
+    // Sentry posts stand on ordinary squares whose terrain object stays
+    // 'empty': nothing may be built or regrown on them, and hyperspace must
+    // never land on them, until the sentry is absorbed.
+    isSentryCell(x, z) {
+        return this.sentries.some((post) => post.x === x && post.z === z);
+    }
+    clearSentry(x, z) {
+        this.sentries = this.sentries.filter((post) => post.x !== x || post.z !== z);
+    }
     getTerrain() {
         return this.terrain;
     }
@@ -70,6 +79,8 @@ export class World {
     placeTree(x, z) {
         if (this.isTowerCell(x, z))
             return false;
+        if (this.isSentryCell(x, z))
+            return false;
         if (this.terrain.getObject(x, z) !== 'empty' || this.terrain.getStack(x, z) > 0)
             return false;
         return this.terrain.setObject(x, z, 'tree');
@@ -81,6 +92,8 @@ export class World {
     }
     placeBoulder(x, z) {
         if (this.isTowerCell(x, z))
+            return false;
+        if (this.isSentryCell(x, z))
             return false;
         const object = this.terrain.getObject(x, z);
         if (object !== 'empty' && object !== 'boulder')
@@ -104,6 +117,8 @@ export class World {
     }
     placeRobot(x, z) {
         if (this.isTowerClosed(x, z))
+            return false;
+        if (this.isSentryCell(x, z))
             return false;
         const object = this.terrain.getObject(x, z);
         if (object !== 'empty' && object !== 'boulder')
@@ -164,6 +179,8 @@ export class World {
             if (this.terrain.surfaceLevel(x, z) > height)
                 continue;
             if (this.isTowerCell(x, z))
+                continue;
+            if (this.isSentryCell(x, z))
                 continue;
             const object = this.terrain.getObject(x, z);
             if (object !== 'empty' && object !== 'boulder')

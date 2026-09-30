@@ -74,7 +74,8 @@ automatically with your remaining energy.
 Perched on the tower, rotating slowly. The scan warning has two
 levels like the 1986 original: full when a watcher sees your square
 (drain of 1 energy per second after ~5s of continuous exposure; break
-line of sight to reset; at 0 energy you are absorbed) and partial
+line of sight to reset; drained with nothing left you are absorbed,
+but spending your last unit on creation leaves you at 0 and alive) and partial
 when it sees only your head (no drain, but it may spawn a Meanie).
 It also absorbs boulders and robot shells it sees (never
 trees, never the shell you stand on): each absorbed energy unit

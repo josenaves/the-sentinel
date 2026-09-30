@@ -12,7 +12,7 @@ export const HYPERSPACE_COST = 3;
 export const SENTINEL_ENERGY = 4;
 export const SIGHT_RANGE = 140;
 export const PAN_KEYBOARD_SPEED = 1.2;
-export const SENTINEL_ROTATION_SPEED = 0.15;
+export const SENTINEL_ROTATION_SPEED = 0.1;
 export const SENTINEL_FOV = 0.7;export const SENTINEL_SCAN_GRACE = 5;
 export const SENTINEL_DRAIN_INTERVAL = 1;
 export const MOUSE_SENSITIVITY = 0.002;

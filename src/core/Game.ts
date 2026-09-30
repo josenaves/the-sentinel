@@ -72,6 +72,7 @@ export class Game {
   private restart(): void {
     this.over = false;
     this.warnedLevel = 'none';
+    this.overMessage = 'ABSORBED BY THE SENTINEL';
     this.loadLandscape(0);
     this.player.energy = STARTING_ENERGY;
     this.sound.unlock();
@@ -170,7 +171,10 @@ export class Game {
     this.warnedLevel = level;
     this.updateMeanie(deltaTime);
     this.hud?.setMeanie(this.meanie !== null);
-    if (!this.over && this.player.energy <= 0) {
+    // Like the original, zero energy alone is survivable (spending your last
+    // unit leaves you at 0 but alive): only the Sentinel's drain, signalled
+    // by a full sighting, or a failed hyperspace kills.
+    if (!this.over && this.player.energy <= 0 && (this.overMessage === 'DESTROYED' || level === 'full')) {
       this.endGame(this.overMessage);
     }
     this.state.player.x = this.player.position.x;
@@ -285,6 +289,7 @@ export class Game {
     if (object === 'tree' && this.meanie && this.meanie.x === target.x && this.meanie.z === target.z) {
       this.clearMeanie();
     }
+    this.renderer.playAbsorbEffect(target.x, target.z, object);
     this.player.addEnergy(getObjectEnergy(object));
     return true;
   }
@@ -293,6 +298,8 @@ export class Game {
     if (!this.world.canAbsorbSentinel(this.player.position.y)) return false;
     this.world.setTowerOpen(true);
     this.sentinel.absorbed = true;
+    const structure = this.world.getVerticalStructure();
+    if (structure) this.renderer.playAbsorbEffect(structure.x, structure.z, 'sentinel');
     this.player.addEnergy(SENTINEL_ENERGY);
     return true;
   }
@@ -300,6 +307,8 @@ export class Game {
   private absorbSentry(sentry: Sentry): boolean {
     if (this.player.position.y <= this.world.columnTopAt(sentry.x, sentry.z)) return false;
     sentry.absorbed = true;
+    this.world.clearSentry(sentry.x, sentry.z);
+    this.renderer.playAbsorbEffect(sentry.x, sentry.z, 'sentry');
     this.player.addEnergy(getObjectEnergy('sentry'));
     return true;
   }
@@ -350,7 +359,9 @@ export class Game {
       this.world.placeRobot(target.x, target.z);
       return false;
     }
+    const from = { ...this.player.position };
     this.player.transferTo(target.x, target.z);
+    this.renderer.startTransferFlight(from, { ...this.player.position });
     return true;
   }
 

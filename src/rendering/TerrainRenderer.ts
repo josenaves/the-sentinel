@@ -14,6 +14,13 @@ const ROBOT_BODY_EMISSIVE = 0x5a6a7d;
 const ROBOT_HEAD_COLOR = 0xffe9a8;
 const ROBOT_HEAD_EMISSIVE = 0xffb52e;
 
+export const ROBOT_COLORS = {
+  body: ROBOT_BODY_COLOR,
+  bodyEmissive: ROBOT_BODY_EMISSIVE,
+  head: ROBOT_HEAD_COLOR,
+  headEmissive: ROBOT_HEAD_EMISSIVE,
+};
+
 export class TerrainRenderer {
   private mesh: InstancedMesh;
   private trunkMesh: InstancedMesh;

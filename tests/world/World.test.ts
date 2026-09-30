@@ -160,4 +160,33 @@ describe('World', () => {
       expect(count).toBeLessThanOrEqual(7);
     }
   });
+
+  it('should refuse objects and hyperspace landings on sentry cells', () => {
+    const world = new World(5000);
+    const posts = world.getSentries();
+    expect(posts.length).toBeGreaterThan(0);
+    for (const post of posts) {
+      expect(world.isSentryCell(post.x, post.z)).toBe(true);
+      expect(world.placeTree(post.x, post.z)).toBe(false);
+      expect(world.placeBoulder(post.x, post.z)).toBe(false);
+      expect(world.placeRobot(post.x, post.z)).toBe(false);
+    }
+    let state = 7;
+    const random = (): number => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      return state / 0x100000000;
+    };
+    for (let i = 0; i < 200; i++) {
+      const dest = world.pickHyperspaceDestination(15, 15, random);
+      if (dest) expect(world.isSentryCell(dest.x, dest.z)).toBe(false);
+    }
+  });
+
+  it('should free the cell once its sentry is absorbed', () => {
+    const world = new World(5000);
+    const post = world.getSentries()[0]!;
+    world.clearSentry(post.x, post.z);
+    expect(world.isSentryCell(post.x, post.z)).toBe(false);
+    expect(world.placeTree(post.x, post.z)).toBe(true);
+  });
 });

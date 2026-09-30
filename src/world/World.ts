@@ -46,6 +46,17 @@ export class World {
     return this.sentries;
   }
 
+  // Sentry posts stand on ordinary squares whose terrain object stays
+  // 'empty': nothing may be built or regrown on them, and hyperspace must
+  // never land on them, until the sentry is absorbed.
+  isSentryCell(x: number, z: number): boolean {
+    return this.sentries.some((post) => post.x === x && post.z === z);
+  }
+
+  clearSentry(x: number, z: number): void {
+    this.sentries = this.sentries.filter((post) => post.x !== x || post.z !== z);
+  }
+
   getTerrain(): Terrain {
     return this.terrain;
   }
@@ -99,6 +110,7 @@ export class World {
 
   placeTree(x: number, z: number): boolean {
     if (this.isTowerCell(x, z)) return false;
+    if (this.isSentryCell(x, z)) return false;
     if (this.terrain.getObject(x, z) !== 'empty' || this.terrain.getStack(x, z) > 0) return false;
     return this.terrain.setObject(x, z, 'tree');
   }
@@ -110,6 +122,7 @@ export class World {
 
   placeBoulder(x: number, z: number): boolean {
     if (this.isTowerCell(x, z)) return false;
+    if (this.isSentryCell(x, z)) return false;
     const object = this.terrain.getObject(x, z);
     if (object !== 'empty' && object !== 'boulder') return false;
     if (!this.terrain.setStack(x, z, this.terrain.getStack(x, z) + 1)) return false;
@@ -129,6 +142,7 @@ export class World {
 
   placeRobot(x: number, z: number): boolean {
     if (this.isTowerClosed(x, z)) return false;
+    if (this.isSentryCell(x, z)) return false;
     const object = this.terrain.getObject(x, z);
     if (object !== 'empty' && object !== 'boulder') return false;
     return this.terrain.setObject(x, z, 'robot');
@@ -192,6 +206,7 @@ export class World {
       if (x === fromX && z === fromZ) continue;
       if (this.terrain.surfaceLevel(x, z) > height) continue;
       if (this.isTowerCell(x, z)) continue;
+      if (this.isSentryCell(x, z)) continue;
       const object = this.terrain.getObject(x, z);
       if (object !== 'empty' && object !== 'boulder') continue;
       return { x, z };

@@ -2,13 +2,16 @@ import { Scene, WebGLRenderer, PerspectiveCamera, Color, InstancedMesh, Mesh, Bo
 import { World } from '../world/World.js';
 import { CELL_SIZE, WORLD_SIZE } from '../core/Constants.js';
 import { createLighting } from './Lighting.js';
-import { TerrainRenderer } from './TerrainRenderer.js';
+import { TerrainRenderer, ROBOT_COLORS } from './TerrainRenderer.js';
+import { AbsorbEffect } from './AbsorbEffect.js';
+import { transferFlightDuration, transferFlightPose, transferShellScale } from './transferFlight.js';
 import { Player } from '../player/Player.js';
 export class Renderer {
     renderer;
     scene;
     camera;
     terrainRenderer;
+    absorbEffects;
     structureMesh = null;
     watcherHeads = [];
     meanieMesh = null;
@@ -18,6 +21,9 @@ export class Renderer {
     sentinel = null;
     sentries = [];
     container;
+    lastEffectTick = 0;
+    flight = null;
+    transferShell = null;
     onResizeBound = () => {
         this.onResize();
     };
@@ -40,6 +46,8 @@ export class Renderer {
         this.scene.add(directional);
         this.scene.fog = fog;
         this.terrainRenderer = new TerrainRenderer(world);
+        this.absorbEffects = new AbsorbEffect();
+        this.scene.add(this.absorbEffects.getMesh());
         this.scene.add(this.terrainRenderer.getMesh());
         this.scene.add(this.terrainRenderer.getTrunkMesh());
         this.scene.add(this.terrainRenderer.getFoliageMesh());
@@ -142,8 +150,25 @@ export class Renderer {
         this.meanieMesh = mesh;
         this.scene.add(mesh);
     }
+    // Fragment burst at the absorbed cell. Call after the world mutation:
+    // the origin is derived from the post-mutation column top. Visual only.
+    playAbsorbEffect(x, z, kind) {
+        const colors = {
+            tree: 0x2ecc71,
+            boulder: 0x888888,
+            robot: 0xd6dde5,
+            sentry: 0x722929,
+            sentinel: 0x3a2a6e,
+        };
+        const color = colors[kind] ?? 0xffffff;
+        const lift = kind === 'boulder' || kind === 'sentinel' ? 2 : 3;
+        this.absorbEffects.spawn((x + 0.5) * CELL_SIZE, this.world.columnTopAt(x, z) + lift, (z + 0.5) * CELL_SIZE, color);
+    }
     render() {
+        this.tickEffects();
         this.syncWatcherVisuals(0);
+        if (this.renderFlight())
+            return;
         this.camera.position.set(this.player.position.x, this.player.position.y, this.player.position.z);
         const lookAt = new Vector3();
         lookAt.x = this.camera.position.x - Math.sin(this.player.rotation) * Math.cos(this.player.pitch);
@@ -156,6 +181,7 @@ export class Renderer {
     // boulders, tower, sentinel/sentries, meanie when present) with a drone
     // camera slowly orbiting overhead. Visual only: no game state is touched.
     renderDrone(elapsedSeconds) {
+        this.tickEffects();
         this.syncWatcherVisuals(elapsedSeconds);
         const center = (WORLD_SIZE * CELL_SIZE) / 2;
         const angle = elapsedSeconds * 0.12;
@@ -173,6 +199,82 @@ export class Renderer {
             this.meanieMesh.rotation.y = this.meanie.angle + elapsedSeconds * 4.5;
         }
     }
+    // Soul flight between robot shells: the logic already teleported, this
+    // only flies the camera from the old eye to the new one. Visual only.
+    startTransferFlight(from, to) {
+        this.flight = {
+            from: { ...from },
+            to: { ...to },
+            start: performance.now() / 1000,
+            duration: transferFlightDuration(from, to),
+        };
+        this.showTransferShell(to);
+    }
+    // Transient destination shell the soul flies into: same look as the
+    // TerrainRenderer robot, scaled by the flight envelope. Hidden on arrival
+    // (the player now occupies it, invisible in first-person).
+    showTransferShell(to) {
+        const cellX = Math.floor(to.x / CELL_SIZE);
+        const cellZ = Math.floor(to.z / CELL_SIZE);
+        let surface = this.world.columnTopAt(cellX, cellZ);
+        if (this.world.isTowerCell(cellX, cellZ))
+            surface -= CELL_SIZE;
+        if (!this.transferShell) {
+            const group = new Group();
+            const body = new Mesh(new CylinderGeometry(0.55, 0.95, 1, 7), new MeshStandardMaterial({ color: ROBOT_COLORS.body, emissive: ROBOT_COLORS.bodyEmissive, emissiveIntensity: 0.5, flatShading: true }));
+            body.position.y = 1.7;
+            body.scale.set(2.4, 3.4, 2.4);
+            const head = new Mesh(new IcosahedronGeometry(0.5, 0), new MeshStandardMaterial({ color: ROBOT_COLORS.head, emissive: ROBOT_COLORS.headEmissive, emissiveIntensity: 0.9, flatShading: true }));
+            head.position.y = 4.4;
+            head.scale.set(2.0, 2.2, 2.0);
+            group.add(body);
+            group.add(head);
+            this.transferShell = group;
+            this.scene.add(group);
+        }
+        this.transferShell.position.set((cellX + 0.5) * CELL_SIZE, surface, (cellZ + 0.5) * CELL_SIZE);
+        this.transferShell.scale.setScalar(0);
+        this.transferShell.visible = true;
+    }
+    hideTransferShell() {
+        if (this.transferShell)
+            this.transferShell.visible = false;
+        this.flight = null;
+    }
+    // Returns true while a flight frame was rendered.
+    renderFlight() {
+        if (!this.flight)
+            return false;
+        const now = performance.now() / 1000;
+        const progress = (now - this.flight.start) / this.flight.duration;
+        if (progress >= 1) {
+            this.hideTransferShell();
+            return false;
+        }
+        if (this.transferShell) {
+            this.transferShell.scale.setScalar(Math.max(0.0001, transferShellScale(progress)));
+        }
+        const cosPitch = Math.cos(this.player.pitch);
+        const lookDir = {
+            x: -Math.sin(this.player.rotation) * cosPitch,
+            y: -Math.sin(this.player.pitch),
+            z: -Math.cos(this.player.rotation) * cosPitch,
+        };
+        const pos = { x: 0, y: 0, z: 0 };
+        const look = { x: 0, y: 0, z: 0 };
+        transferFlightPose(this.flight.from, this.flight.to, lookDir, progress, pos, look);
+        this.camera.position.set(pos.x, pos.y, pos.z);
+        this.camera.lookAt(new Vector3(look.x, look.y, look.z));
+        this.renderer.render(this.scene, this.camera);
+        return true;
+    }
+    tickEffects() {
+        const now = performance.now() / 1000;
+        if (this.lastEffectTick === 0)
+            this.lastEffectTick = now;
+        this.absorbEffects.update(now - this.lastEffectTick);
+        this.lastEffectTick = now;
+    }
     onResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
@@ -181,6 +283,7 @@ export class Renderer {
     dispose() {
         window.removeEventListener('resize', this.onResizeBound);
         this.terrainRenderer.dispose();
+        this.absorbEffects.dispose();
         for (const { group } of this.watcherHeads) {
             group.traverse((child) => {
                 const mesh = child;
@@ -193,6 +296,17 @@ export class Renderer {
         }
         this.watcherHeads = [];
         this.setMeanie(null);
+        if (this.transferShell) {
+            this.transferShell.traverse((child) => {
+                const mesh = child;
+                if (mesh.isMesh) {
+                    mesh.geometry.dispose();
+                    mesh.material.dispose();
+                }
+            });
+            this.scene.remove(this.transferShell);
+            this.transferShell = null;
+        }
         if (this.structureMesh) {
             this.structureMesh.geometry.dispose();
             this.structureMesh.material.dispose();

@@ -27,7 +27,7 @@ export class Game {
   private meanie: Meanie | null = null;
   private sound = new Sound();
   private started = false;
-  private warned = false;
+  private warnedLevel: 'none' | 'partial' | 'full' = 'none';
   private over = false;
   private overMessage = 'ABSORBED BY THE SENTINEL';
   private transitionTo: number | null = null;
@@ -68,7 +68,7 @@ export class Game {
 
   private restart(): void {
     this.over = false;
-    this.warned = false;
+    this.warnedLevel = 'none';
     this.loadLandscape(0);
     this.player.energy = STARTING_ENERGY;
     this.sound.unlock();
@@ -156,12 +156,14 @@ export class Game {
         this.renderer.updateTerrain();
       }
     }
-    const warning = this.sentinel.warning || this.sentries.some((sentry) => sentry.warning);
-    this.hud?.setWarning(warning);
-    if (warning && !this.warned) {
+    const level = this.warningLevel();
+    this.hud?.setWarning(level);
+    if (level === 'full' && this.warnedLevel !== 'full') {
       this.sound.alarm();
+    } else if (level === 'partial' && this.warnedLevel === 'none') {
+      this.sound.partial();
     }
-    this.warned = warning;
+    this.warnedLevel = level;
     this.updateMeanie(deltaTime);
     this.hud?.setMeanie(this.meanie !== null);
     if (!this.over && this.player.energy <= 0) {
@@ -197,8 +199,20 @@ export class Game {
     return `Mira: (${target.x},${target.z}) ${this.world.getObject(target.x, target.z)}${suffix}`;
   }
 
-  private describeObjective(): string {
-    if (!this.world.isTowerOpen()) return 'OBJ: suba acima da torre e absorva o Sentinel (A)';
+  // Scan warning like the 1986 original: full when a watcher sees your
+  // square (drain imminent), partial when it sees only your head.
+  private warningLevel(): 'none' | 'partial' | 'full' {
+    const watchers: Sentinel[] = [this.sentinel, ...this.sentries].filter((watcher) => !watcher.absorbed);
+    if (watchers.some((watcher) => watcher.seesHead(this.world, this.player) && watcher.seesSquare(this.world, this.player))) {
+      return 'full';
+    }
+    if (watchers.some((watcher) => watcher.seesHead(this.world, this.player))) {
+      return 'partial';
+    }
+    return 'none';
+  }
+
+  private describeObjective(): string {    if (!this.world.isTowerOpen()) return 'OBJ: suba acima da torre e absorva o Sentinel (A)';
     const current = this.player.currentCell();
     if (this.world.isTowerCell(current.x, current.z)) return 'OBJ: pressione H para vencer!';
     return 'OBJ: torre aberta! R na torre, Q, depois H';

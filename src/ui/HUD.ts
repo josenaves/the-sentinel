@@ -83,15 +83,21 @@ export class HUD {
     landscape.textContent = `Landscape ${String(number).padStart(4, '0')}`;
   }
 
-  setWarning(active: boolean): void {
+  setWarning(level: 'none' | 'partial' | 'full'): void {
     let warning = this.element.querySelector('[data-warning]');
     if (!warning) {
       warning = document.createElement('div');
       warning.setAttribute('data-warning', 'true');
-      warning.textContent = '!! SENTINEL SEES YOU !!';
       this.element.appendChild(warning);
     }
-    (warning as HTMLElement).style.display = active ? 'block' : 'none';
+    const element = warning as HTMLElement;
+    if (level === 'none') {
+      element.style.display = 'none';
+      return;
+    }
+    element.style.display = 'block';
+    element.style.color = level === 'full' ? '#ff4444' : '#ffdf6b';
+    element.textContent = level === 'full' ? '!! SENTINEL SEES YOU !!' : '! SENTINEL SEES YOU (PARTIAL)';
   }
 
   setMeanie(active: boolean): void {

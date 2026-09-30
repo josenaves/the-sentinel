@@ -23,7 +23,7 @@ export class Game {
     meanie = null;
     sound = new Sound();
     started = false;
-    warned = false;
+    warnedLevel = 'none';
     over = false;
     overMessage = 'ABSORBED BY THE SENTINEL';
     transitionTo = null;
@@ -62,7 +62,7 @@ export class Game {
     }
     restart() {
         this.over = false;
-        this.warned = false;
+        this.warnedLevel = 'none';
         this.loadLandscape(0);
         this.player.energy = STARTING_ENERGY;
         this.sound.unlock();
@@ -147,12 +147,15 @@ export class Game {
                 this.renderer.updateTerrain();
             }
         }
-        const warning = this.sentinel.warning || this.sentries.some((sentry) => sentry.warning);
-        this.hud?.setWarning(warning);
-        if (warning && !this.warned) {
+        const level = this.warningLevel();
+        this.hud?.setWarning(level);
+        if (level === 'full' && this.warnedLevel !== 'full') {
             this.sound.alarm();
         }
-        this.warned = warning;
+        else if (level === 'partial' && this.warnedLevel === 'none') {
+            this.sound.partial();
+        }
+        this.warnedLevel = level;
         this.updateMeanie(deltaTime);
         this.hud?.setMeanie(this.meanie !== null);
         if (!this.over && this.player.energy <= 0) {
@@ -187,6 +190,18 @@ export class Game {
         const stack = this.world.getStack(target.x, target.z);
         const suffix = stack > 0 ? ` x${stack + 1}` : '';
         return `Mira: (${target.x},${target.z}) ${this.world.getObject(target.x, target.z)}${suffix}`;
+    }
+    // Scan warning like the 1986 original: full when a watcher sees your
+    // square (drain imminent), partial when it sees only your head.
+    warningLevel() {
+        const watchers = [this.sentinel, ...this.sentries].filter((watcher) => !watcher.absorbed);
+        if (watchers.some((watcher) => watcher.seesHead(this.world, this.player) && watcher.seesSquare(this.world, this.player))) {
+            return 'full';
+        }
+        if (watchers.some((watcher) => watcher.seesHead(this.world, this.player))) {
+            return 'partial';
+        }
+        return 'none';
     }
     describeObjective() {
         if (!this.world.isTowerOpen())

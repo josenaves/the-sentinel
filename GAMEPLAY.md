@@ -71,11 +71,12 @@ automatically with your remaining energy.
 
 ## Sentinel
 
-Perched on the tower, rotating slowly. If you are inside its gaze
-cone with a clear line of sight, the warning shows: after ~5s of
-continuous exposure it drains 1 energy per second. Break line of
-sight (or leave the cone) to reset. At 0 energy you are absorbed:
-game over. It also absorbs boulders and robot shells it sees (never
+Perched on the tower, rotating slowly. The scan warning has two
+levels like the 1986 original: full when a watcher sees your square
+(drain of 1 energy per second after ~5s of continuous exposure; break
+line of sight to reset; at 0 energy you are absorbed) and partial
+when it sees only your head (no drain, but it may spawn a Meanie).
+It also absorbs boulders and robot shells it sees (never
 trees, never the shell you stand on): each absorbed energy unit
 regrows as a random tree elsewhere, keeping total energy constant.
 

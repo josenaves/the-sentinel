@@ -68,6 +68,10 @@ export class Sound {
     this.tone(220, 0.15, 'sawtooth');
   }
 
+  partial(): void {
+    this.tone(880, 0.06, 'square', 0.03);
+  }
+
   meanie(): void {
     this.tone(180, 0.12, 'sawtooth');
     this.tone(180, 0.12, 'sawtooth', 0.04, 0.16);

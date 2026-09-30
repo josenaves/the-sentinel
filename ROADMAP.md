@@ -59,3 +59,7 @@
 ## Backlog (verificação em jogo)
 
 - [ ] Meanie: confirmar encontro em gameplay real e ajustar o trigger (cabeça visível sem o tile + árvore próxima) se estiver raro demais
+
+## Improvements
+
+- [x] Start screen: drone backdrop orbiting the rendered world (terrain, trees, boulders, tower, sentinel/sentries, meanie when present) before play

@@ -160,12 +160,21 @@ export class HUD {
       <div style="font-size: 24px; font-weight: bold;">SENTINEL-3D</div>
       <div>Absorb the Sentinel on the tower, then hyperspace out.</div>
       <div>A absorb | T tree | B boulder | R robot | Q transfer | H hyper</div>
-      <div style="margin-top: 12px; color: #ffdf6b;">CLICK TO PLAY</div>
+      <div style="margin-top: 12px; color: #ffdf6b;">CLICK OR PRESS ENTER TO PLAY</div>
     `;
-    panel.addEventListener('click', () => {
+    let dismissed = false;
+    const start = (): void => {
+      if (dismissed) return;
+      dismissed = true;
+      window.removeEventListener('keydown', onKey);
       panel.parentNode?.removeChild(panel);
       onStart();
-    });
+    };
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.code === 'Enter') start();
+    };
+    panel.addEventListener('click', start);
+    window.addEventListener('keydown', onKey);
     document.body.appendChild(panel);
   }
 

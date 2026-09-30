@@ -32,6 +32,7 @@ export class Game {
   private overMessage = 'ABSORBED BY THE SENTINEL';
   private transitionTo: number | null = null;
   private transitionTimer = 0;
+  private droneTime = 0;
 
   constructor(hud?: HUD) {
     this.state = createInitialGameState();
@@ -51,6 +52,8 @@ export class Game {
     } else {
       this.startGame();
     }
+    // Run the loop behind the start panel too so the drone backdrop animates.
+    this.gameLoop.start();
   }
 
   private initialize(): void {
@@ -127,7 +130,8 @@ export class Game {
 
   private update(deltaTime: number): void {
     if (!this.started) {
-      this.renderer.render();
+      this.droneTime += deltaTime;
+      this.renderer.renderDrone(this.droneTime);
       return;
     }
     if (this.transitionTo !== null) {

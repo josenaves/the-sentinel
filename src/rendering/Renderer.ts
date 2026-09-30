@@ -193,13 +193,7 @@ export class Renderer {
   }
 
   render(): void {
-    for (const { group, entity } of this.watcherHeads) {
-      group.rotation.y = entity.angle;
-      group.visible = !entity.absorbed;
-    }
-    if (this.meanieMesh && this.meanie) {
-      this.meanieMesh.rotation.y = this.meanie.angle;
-    }
+    this.syncWatcherVisuals(0);
     this.camera.position.set(this.player.position.x, this.player.position.y, this.player.position.z);
 
     const lookAt = new Vector3();
@@ -209,6 +203,34 @@ export class Renderer {
     this.camera.lookAt(lookAt);
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // Backdrop for the start panel: the same world scene (terrain, trees,
+  // boulders, tower, sentinel/sentries, meanie when present) with a drone
+  // camera slowly orbiting overhead. Visual only: no game state is touched.
+  renderDrone(elapsedSeconds: number): void {
+    this.syncWatcherVisuals(elapsedSeconds);
+    const center = (WORLD_SIZE * CELL_SIZE) / 2;
+    const angle = elapsedSeconds * 0.12;
+    const radius = WORLD_SIZE * CELL_SIZE * 0.95;
+    this.camera.position.set(
+      center + Math.cos(angle) * radius,
+      WORLD_SIZE * CELL_SIZE * 0.7,
+      center + Math.sin(angle) * radius,
+    );
+    this.camera.lookAt(new Vector3(center, CELL_SIZE * 2, center));
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  private syncWatcherVisuals(elapsedSeconds: number): void {
+    for (const { group, entity } of this.watcherHeads) {
+      group.rotation.y = entity.angle + elapsedSeconds * 0.15;
+      group.visible = !entity.absorbed;
+    }
+    if (this.meanieMesh && this.meanie) {
+      this.meanieMesh.rotation.y = this.meanie.angle + elapsedSeconds * 4.5;
+    }
   }
 
   private onResize(): void {

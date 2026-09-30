@@ -28,6 +28,7 @@ export class Game {
     overMessage = 'ABSORBED BY THE SENTINEL';
     transitionTo = null;
     transitionTimer = 0;
+    droneTime = 0;
     constructor(hud) {
         this.state = createInitialGameState();
         // New games start at landscape 0000 like the 1986 original: no sentries.
@@ -47,6 +48,8 @@ export class Game {
         else {
             this.startGame();
         }
+        // Run the loop behind the start panel too so the drone backdrop animates.
+        this.gameLoop.start();
     }
     initialize() {
         this.renderer.initialize();
@@ -119,7 +122,8 @@ export class Game {
     }
     update(deltaTime) {
         if (!this.started) {
-            this.renderer.render();
+            this.droneTime += deltaTime;
+            this.renderer.renderDrone(this.droneTime);
             return;
         }
         if (this.transitionTo !== null) {
